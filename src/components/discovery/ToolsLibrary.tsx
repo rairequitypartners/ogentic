@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bot, FileText, Wrench, Zap, Star, Download, ExternalLink } from "lucide-react";
+import { useAIDiscovery } from "@/hooks/useAIDiscovery";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 interface FilterState {
   types: string[];
@@ -30,6 +32,7 @@ interface Tool {
   tags: string[];
   pricing: 'free' | 'freemium' | 'paid';
   url?: string;
+  reason?: string;
 }
 
 const getComponentIcon = (type: string) => {
@@ -52,8 +55,8 @@ const getComponentColor = (type: string) => {
   }
 };
 
-// Enhanced mock data generation that responds better to search queries
-const generateMockTools = (query: string, filters: FilterState): Tool[] => {
+// Fallback mock data for when AI discovery is not available
+const getFallbackTools = (query: string, filters: FilterState): Tool[] => {
   const baseTools: Tool[] = [
     {
       id: "1",
@@ -84,150 +87,47 @@ const generateMockTools = (query: string, filters: FilterState): Tool[] => {
     },
     {
       id: "3",
-      name: "Zapier Automation",
-      description: "Connect and automate workflows between 5,000+ apps",
+      name: "Gaming Analytics Dashboard",
+      description: "Track player behavior, engagement metrics, and game performance",
       type: 'tool',
-      source: 'Zapier',
+      source: 'Unity',
       rating: 4.6,
-      downloads: 89000,
-      featured: false,
+      downloads: 28000,
+      featured: true,
       complexity: 'intermediate',
-      tags: ['automation', 'integration', 'workflow'],
-      pricing: 'freemium',
-      url: 'https://zapier.com'
+      tags: ['gaming', 'analytics', 'metrics', 'dashboard'],
+      pricing: 'freemium'
     },
     {
       id: "4",
-      name: "Claude-3 Haiku",
-      description: "Fast, creative AI model optimized for content generation",
-      type: 'model',
-      source: 'Anthropic',
-      rating: 4.7,
-      downloads: 45000,
-      featured: true,
-      complexity: 'beginner',
-      tags: ['content-generation', 'creative-writing', 'fast'],
-      pricing: 'paid',
-      url: 'https://claude.ai'
-    },
-    {
-      id: "5",
-      name: "Social Media Content Generator",
-      description: "AI prompt for creating engaging social media posts across platforms",
+      name: "Game Strategy AI Prompt",
+      description: "AI assistant for learning game strategies and tactics",
       type: 'prompt',
       source: 'Community',
       rating: 4.5,
       downloads: 12000,
       featured: false,
       complexity: 'beginner',
-      tags: ['social-media', 'marketing', 'content'],
+      tags: ['gaming', 'strategy', 'learning', 'tactics'],
       pricing: 'free'
     },
     {
-      id: "6",
-      name: "Priority Ticket Classifier",
-      description: "AI agent that automatically categorizes and prioritizes support tickets",
-      type: 'agent',
-      source: 'Custom',
-      rating: 4.8,
-      downloads: 3500,
-      featured: true,
-      complexity: 'advanced',
-      tags: ['classification', 'automation', 'support', 'customers'],
-      pricing: 'freemium'
-    },
-    {
-      id: "7",
-      name: "Notion Database Sync",
-      description: "Automated data synchronization between applications and Notion",
-      type: 'tool',
-      source: 'Notion',
-      rating: 4.4,
-      downloads: 28000,
-      featured: false,
-      complexity: 'intermediate',
-      tags: ['database', 'sync', 'productivity'],
-      pricing: 'freemium',
-      url: 'https://notion.so'
-    },
-    {
-      id: "8",
-      name: "Data Insights Analyzer",
-      description: "AI prompt for generating business insights from raw data",
-      type: 'prompt',
-      source: 'Custom',
-      rating: 4.6,
-      downloads: 8900,
-      featured: false,
-      complexity: 'advanced',
-      tags: ['analytics', 'insights', 'business'],
-      pricing: 'free'
-    },
-    {
-      id: "9",
-      name: "Customer Acquisition Agent",
-      description: "AI agent that helps identify and engage potential customers automatically",
-      type: 'agent',
+      id: "5",
+      name: "Player Behavior Analysis Model",
+      description: "AI model that analyzes gaming patterns and suggests improvements",
+      type: 'model',
       source: 'Custom',
       rating: 4.7,
-      downloads: 6200,
-      featured: true,
-      complexity: 'intermediate',
-      tags: ['customer-acquisition', 'lead-generation', 'sales', 'customers'],
-      pricing: 'paid'
-    },
-    {
-      id: "10",
-      name: "Email Marketing Optimizer",
-      description: "Tool for optimizing email campaigns and improving open rates",
-      type: 'tool',
-      source: 'Mailchimp',
-      rating: 4.6,
-      downloads: 15600,
-      featured: false,
-      complexity: 'beginner',
-      tags: ['email-marketing', 'optimization', 'campaigns', 'customers'],
-      pricing: 'freemium'
-    },
-    {
-      id: "11",
-      name: "Lead Scoring Model",
-      description: "AI model that scores and ranks leads based on conversion probability",
-      type: 'model',
-      source: 'HubSpot',
-      rating: 4.8,
-      downloads: 9800,
+      downloads: 8500,
       featured: true,
       complexity: 'advanced',
-      tags: ['lead-scoring', 'sales', 'conversion', 'customers'],
+      tags: ['gaming', 'analysis', 'behavior', 'learning'],
       pricing: 'paid'
-    },
-    {
-      id: "12",
-      name: "Customer Retention Prompt",
-      description: "Comprehensive prompt for creating customer retention strategies",
-      type: 'prompt',
-      source: 'Community',
-      rating: 4.5,
-      downloads: 4300,
-      featured: false,
-      complexity: 'intermediate',
-      tags: ['retention', 'strategy', 'customer-success', 'customers'],
-      pricing: 'free'
     }
   ];
 
-  // If there's no query and no filters, show all tools
-  if (!query.trim() && 
-      filters.types.length === 0 && 
-      filters.sources.length === 0 && 
-      filters.complexity.length === 0 && 
-      filters.industries.length === 0) {
-    return baseTools;
-  }
-
+  // Filter based on query and filters
   return baseTools.filter(tool => {
-    // Search query filter - more comprehensive matching
     if (query.trim()) {
       const searchTerms = query.toLowerCase().split(/\s+/);
       const searchableText = [
@@ -245,17 +145,14 @@ const generateMockTools = (query: string, filters: FilterState): Tool[] => {
       if (!matchesSearch) return false;
     }
 
-    // Type filter
     if (filters.types.length > 0 && !filters.types.includes(tool.type)) {
       return false;
     }
 
-    // Source filter
     if (filters.sources.length > 0 && !filters.sources.includes(tool.source.toLowerCase())) {
       return false;
     }
 
-    // Complexity filter
     if (filters.complexity.length > 0 && !filters.complexity.includes(tool.complexity)) {
       return false;
     }
@@ -264,35 +161,101 @@ const generateMockTools = (query: string, filters: FilterState): Tool[] => {
   });
 };
 
+// Convert AI discovery components to tools format
+const convertAIComponentsToTools = (components: any[]): Tool[] => {
+  return components.map((component, index) => ({
+    id: `ai-${index}`,
+    name: component.name || 'AI Tool',
+    description: component.description || 'AI-generated tool recommendation',
+    type: component.type || 'tool',
+    source: component.source || 'AI Generated',
+    rating: 4.5 + Math.random() * 0.5, // Random rating between 4.5-5.0
+    downloads: Math.floor(Math.random() * 50000) + 1000,
+    featured: component.featured || false,
+    complexity: component.complexity || 'intermediate',
+    tags: component.tags || [],
+    pricing: component.pricing || 'freemium',
+    url: component.url,
+    reason: component.reason
+  }));
+};
+
 export const ToolsLibrary = ({ searchQuery, filters }: ToolsLibraryProps) => {
+  const { parseQuery, loading: aiLoading } = useAIDiscovery();
+  const { preferences } = useUserPreferences();
   const [tools, setTools] = useState<Tool[]>([]);
   const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'rating' | 'downloads' | 'name'>('rating');
 
   useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      let results = generateMockTools(searchQuery, filters);
+    const fetchTools = async () => {
+      setLoading(true);
       
-      // Sort results
-      results.sort((a, b) => {
-        if (sortBy === 'rating') return b.rating - a.rating;
-        if (sortBy === 'downloads') return b.downloads - a.downloads;
-        if (sortBy === 'name') return a.name.localeCompare(b.name);
-        return 0;
-      });
+      try {
+        if (searchQuery.trim()) {
+          console.log('Fetching AI-powered tool recommendations for:', searchQuery);
+          
+          // Use AI discovery to get relevant tools
+          const aiResults = await parseQuery(searchQuery, preferences, 'tools');
+          
+          if (aiResults.generatedStacks && aiResults.generatedStacks.length > 0) {
+            // Extract all components from generated stacks
+            const allComponents = aiResults.generatedStacks.flatMap(stack => stack.components);
+            const aiTools = convertAIComponentsToTools(allComponents);
+            
+            // Apply filters to AI-generated tools
+            const filteredAITools = aiTools.filter(tool => {
+              if (filters.types.length > 0 && !filters.types.includes(tool.type)) {
+                return false;
+              }
+              if (filters.sources.length > 0 && !filters.sources.includes(tool.source.toLowerCase())) {
+                return false;
+              }
+              if (filters.complexity.length > 0 && !filters.complexity.includes(tool.complexity)) {
+                return false;
+              }
+              return true;
+            });
+            
+            console.log('AI-generated tools:', filteredAITools);
+            setTools(filteredAITools);
+          } else {
+            console.log('No AI results, using fallback');
+            setTools(getFallbackTools(searchQuery, filters));
+          }
+        } else {
+          // Show fallback tools when no search query
+          setTools(getFallbackTools(searchQuery, filters));
+        }
+      } catch (error) {
+        console.error('Error fetching AI tools:', error);
+        // Fallback to static tools on error
+        setTools(getFallbackTools(searchQuery, filters));
+      }
       
-      setTools(results);
       setLoading(false);
-    }, 300);
-  }, [searchQuery, filters, sortBy]);
+    };
 
-  if (loading) {
+    fetchTools();
+  }, [searchQuery, filters, parseQuery, preferences]);
+
+  // Sort tools
+  useEffect(() => {
+    const sortedTools = [...tools].sort((a, b) => {
+      if (sortBy === 'rating') return b.rating - a.rating;
+      if (sortBy === 'downloads') return b.downloads - a.downloads;
+      if (sortBy === 'name') return a.name.localeCompare(b.name);
+      return 0;
+    });
+    setTools(sortedTools);
+  }, [sortBy]);
+
+  if (loading || aiLoading) {
     return (
       <div className="space-y-4">
         <div className="flex items-center space-x-2 text-primary">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-          <span>Loading tools...</span>
+          <span>Discovering AI tools...</span>
         </div>
         {[...Array(6)].map((_, i) => (
           <Card key={i} className="animate-pulse">
@@ -317,6 +280,11 @@ export const ToolsLibrary = ({ searchQuery, filters }: ToolsLibraryProps) => {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">
           {tools.length} Tool{tools.length !== 1 ? 's' : ''} Found
+          {searchQuery && (
+            <span className="text-sm text-muted-foreground font-normal ml-2">
+              for "{searchQuery}"
+            </span>
+          )}
         </h3>
         <div className="flex items-center space-x-2">
           <span className="text-sm text-muted-foreground">Sort by:</span>
@@ -361,11 +329,19 @@ export const ToolsLibrary = ({ searchQuery, filters }: ToolsLibraryProps) => {
               <CardContent>
                 <CardDescription className="mb-3">{tool.description}</CardDescription>
                 
+                {tool.reason && (
+                  <div className="mb-3 p-2 bg-blue-50 rounded-lg border-l-4 border-blue-200">
+                    <p className="text-sm text-blue-800">
+                      <strong>Why this tool:</strong> {tool.reason}
+                    </p>
+                  </div>
+                )}
+                
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-1">
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span>{tool.rating}</span>
+                      <span>{tool.rating.toFixed(1)}</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Download className="h-4 w-4" />
