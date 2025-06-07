@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { AIEnhancedSearch } from "@/components/discovery/AIEnhancedSearch";
 import { DiscoveryFilters } from "@/components/discovery/DiscoveryFilters";
@@ -20,6 +21,7 @@ interface FilterState {
 const Discovery = () => {
   const { user } = useAuth();
   const { preferences } = useUserPreferences();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<FilterState>({
     types: [],
@@ -29,8 +31,22 @@ const Discovery = () => {
   });
   const [activeTab, setActiveTab] = useState("stacks");
 
+  // Get initial search query from URL parameters
+  useEffect(() => {
+    const queryParam = searchParams.get('q');
+    if (queryParam) {
+      setSearchQuery(queryParam);
+    }
+  }, [searchParams]);
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    // Update URL with search query
+    if (query) {
+      setSearchParams({ q: query });
+    } else {
+      setSearchParams({});
+    }
   };
 
   const handleFilterChange = (newFilters: FilterState) => {
@@ -53,6 +69,7 @@ const Discovery = () => {
               onFiltersChange={handleFilterChange}
               userPreferences={preferences}
               context={activeTab as any}
+              initialQuery={searchQuery}
             />
           </div>
 

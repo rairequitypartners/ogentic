@@ -40,18 +40,8 @@ const Index = () => {
   }, [user, needsOnboarding, authLoading, navigate]);
 
   const handleSearch = async (query: string) => {
-    setSearchQuery(query);
-    
-    // Mock AI stack generation based on query
-    const mockStack = generateMockStack(query);
-    setSelectedStack(mockStack);
-    setCurrentState('results');
-
-    // Auto-save stack if user is logged in
-    if (user && mockStack) {
-      const stackId = await saveStack(query, mockStack);
-      setCurrentStackId(stackId);
-    }
+    // Redirect to discovery page with search query
+    navigate(`/discovery?q=${encodeURIComponent(query)}`);
   };
 
   const generateMockStack = (query: string): any => {
@@ -140,7 +130,7 @@ const Index = () => {
           type: 'prompt',
           name: 'Business Process Analyzer',
           description: 'Analyzes and optimizes business workflows',
-          reason: 'This prompt helps identify inefficiencies and suggests automation opportunities.',
+          reason: 'This prompt helps identify inefficiencies and suggest automation opportunities.',
           source: 'Custom',
           featured: true
         },
