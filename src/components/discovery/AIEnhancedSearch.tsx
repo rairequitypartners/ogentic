@@ -12,17 +12,27 @@ interface AIEnhancedSearchProps {
   onFiltersChange: (filters: any) => void;
   userPreferences?: any;
   context?: 'stacks' | 'tools' | 'recommendations';
+  initialQuery?: string;
 }
 
 export const AIEnhancedSearch = ({ 
   onSearch, 
   onFiltersChange, 
   userPreferences, 
-  context = 'stacks' 
+  context = 'stacks',
+  initialQuery = ""
 }: AIEnhancedSearchProps) => {
-  const [lastQuery, setLastQuery] = useState("");
+  const [lastQuery, setLastQuery] = useState(initialQuery);
   const [aiInsights, setAiInsights] = useState<any>(null);
   const { parseQuery, loading } = useAIDiscovery();
+
+  // Set initial query when component mounts
+  useEffect(() => {
+    if (initialQuery && initialQuery !== lastQuery) {
+      setLastQuery(initialQuery);
+      handleSearch(initialQuery);
+    }
+  }, [initialQuery]);
 
   const handleSearch = async (query: string) => {
     setLastQuery(query);
@@ -58,6 +68,7 @@ export const AIEnhancedSearch = ({
         onSearch={handleSearch}
         placeholder={`Describe what you're looking for... (e.g., "customer support automation for e-commerce")`}
         className="max-w-4xl"
+        value={lastQuery}
       />
       
       {loading && (

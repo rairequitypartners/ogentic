@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bot, FileText, Wrench, Zap, Users, Clock, Star, ExternalLink, DollarSign, Lightbulb } from "lucide-react";
+import { Bot, FileText, Wrench, Zap, Users, Clock, Star, ExternalLink, DollarSign, Lightbulb, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useAIDiscovery } from "@/hooks/useAIDiscovery";
 
@@ -71,15 +71,25 @@ const getPricingIcon = (pricing?: string) => {
 
 export const StackResults = ({ searchQuery, filters, userPreferences }: StackResultsProps) => {
   const [aiStacks, setAiStacks] = useState<GeneratedStack[]>([]);
+  const [displayedStacks, setDisplayedStacks] = useState<GeneratedStack[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(0);
   const { parseQuery } = useAIDiscovery();
+  
+  const STACKS_PER_PAGE = 2; // Show 2 stacks initially, then load more
 
   useEffect(() => {
     if (searchQuery.trim().length > 3) {
       setLoading(true);
+      setPage(0);
+      setDisplayedStacks([]);
+      
       parseQuery(searchQuery, userPreferences, 'stacks')
         .then(result => {
-          setAiStacks(result.generatedStacks || []);
+          const stacks = result.generatedStacks || [];
+          setAiStacks(stacks);
+          setDisplayedStacks(stacks.slice(0, STACKS_PER_PAGE));
           setLoading(false);
         })
         .catch(error => {
@@ -88,15 +98,49 @@ export const StackResults = ({ searchQuery, filters, userPreferences }: StackRes
         });
     } else {
       setAiStacks([]);
+      setDisplayedStacks([]);
     }
   }, [searchQuery, userPreferences, parseQuery]);
+
+  const loadMoreStacks = async () => {
+    setLoadingMore(true);
+    
+    // Simulate API delay for additional stacks
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const nextPage = page + 1;
+    const startIndex = nextPage * STACKS_PER_PAGE;
+    const endIndex = startIndex + STACKS_PER_PAGE;
+    
+    // If we need more stacks, generate them
+    if (startIndex >= aiStacks.length) {
+      try {
+        const result = await parseQuery(`${searchQuery} additional variations`, userPreferences, 'stacks');
+        const newStacks = result.generatedStacks || [];
+        const updatedStacks = [...aiStacks, ...newStacks];
+        setAiStacks(updatedStacks);
+        setDisplayedStacks([...displayedStacks, ...newStacks.slice(0, STACKS_PER_PAGE)]);
+      } catch (error) {
+        console.error('Failed to load more stacks:', error);
+      }
+    } else {
+      // Use existing stacks
+      const newStacks = aiStacks.slice(startIndex, endIndex);
+      setDisplayedStacks([...displayedStacks, ...newStacks]);
+    }
+    
+    setPage(nextPage);
+    setLoadingMore(false);
+  };
+
+  const hasMoreStacks = displayedStacks.length < aiStacks.length || displayedStacks.length >= STACKS_PER_PAGE;
 
   if (loading) {
     return (
       <div className="space-y-4">
         <div className="flex items-center space-x-2 text-primary">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-          <span>AI is generating comprehensive stacks for your needs...</span>
+          <span>AI is generating stacks for your needs...</span>
         </div>
         {[...Array(2)].map((_, i) => (
           <Card key={i} className="animate-pulse">
@@ -117,7 +161,7 @@ export const StackResults = ({ searchQuery, filters, userPreferences }: StackRes
     );
   }
 
-  if (aiStacks.length === 0 && searchQuery.trim().length > 3) {
+  if (displayedStacks.length === 0 && searchQuery.trim().length > 3) {
     return (
       <Card>
         <CardContent className="p-6 text-center">
@@ -152,7 +196,8 @@ export const StackResults = ({ searchQuery, filters, userPreferences }: StackRes
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">
-          {aiStacks.length} AI-Generated Stack{aiStacks.length !== 1 ? 's' : ''} Found
+          {displayedStacks.length} AI-Generated Stack{displayedStacks.length !== 1 ? 's' : ''}
+          {aiStacks.length > displayedStacks.length && ` (${aiStacks.length - displayedStacks.length} more available)`}
         </h3>
         <Badge variant="secondary" className="flex items-center space-x-1">
           <Zap className="h-3 w-3" />
@@ -160,7 +205,7 @@ export const StackResults = ({ searchQuery, filters, userPreferences }: StackRes
         </Badge>
       </div>
       
-      {aiStacks.map((stack, index) => (
+      {displayedStacks.map((stack, index) => (
         <Card key={index} className="card-hover border-primary/20">
           <CardHeader>
             <div className="flex items-start justify-between">
@@ -285,6 +330,26 @@ export const StackResults = ({ searchQuery, filters, userPreferences }: StackRes
           </CardContent>
         </Card>
       ))}
+
+      {hasMoreStacks && (
+        <div className="flex justify-center">
+          <Button 
+            onClick={loadMoreStacks} 
+            variant="outline" 
+            disabled={loadingMore}
+            className="w-full max-w-sm"
+          >
+            {loadingMore ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Loading more stacks...
+              </>
+            ) : (
+              'Load More Stacks'
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
