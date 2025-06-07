@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StackDeployment } from "@/components/StackDeployment";
 import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +18,9 @@ import {
   Search, 
   Settings, 
   ChevronDown, 
-  ChevronUp 
+  ChevronUp,
+  Sparkles,
+  ArrowRight
 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -24,6 +28,7 @@ type AIStack = Tables<'ai_stacks'>;
 
 export default function MyStacks() {
   const { user, loading: authLoading } = useAuth();
+  const { isOnboardingCompleted, loading: preferencesLoading } = useUserPreferences();
   const [stacks, setStacks] = useState<AIStack[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedStack, setExpandedStack] = useState<string | null>(null);
@@ -113,6 +118,27 @@ export default function MyStacks() {
             Manage your saved AI stacks and deploy them to your favorite tools.
           </p>
         </div>
+
+        {!preferencesLoading && !isOnboardingCompleted() && (
+          <Alert className="mb-6 border-primary/20 bg-primary/5">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <AlertTitle className="text-primary">Complete Your Setup</AlertTitle>
+            <AlertDescription className="mt-2">
+              <p className="mb-3">
+                Get personalized AI agent recommendations by completing your profile setup. 
+                This helps us match you with the best agents for your specific needs and industry.
+              </p>
+              <Button 
+                onClick={() => navigate("/onboarding")} 
+                className="button-glow"
+                size="sm"
+              >
+                Start Onboarding
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {loading ? (
           <div className="grid grid-cols-1 gap-6">
