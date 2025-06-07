@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -29,7 +28,7 @@ const Discovery = () => {
     complexity: [],
     industries: []
   });
-  const [activeTab, setActiveTab] = useState("stacks");
+  const [activeTab, setActiveTab] = useState("tools");
 
   // Get initial search query from URL parameters
   useEffect(() => {
@@ -87,23 +86,23 @@ const Discovery = () => {
             <div className="lg:col-span-3">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="stacks">Complete Stacks</TabsTrigger>
                   <TabsTrigger value="tools">Individual Tools</TabsTrigger>
+                  <TabsTrigger value="stacks">Complete Stacks</TabsTrigger>
                   <TabsTrigger value="recommended">AI Recommended</TabsTrigger>
                 </TabsList>
+                
+                <TabsContent value="tools" className="mt-6">
+                  <ToolsLibrary 
+                    searchQuery={searchQuery}
+                    filters={filters}
+                  />
+                </TabsContent>
                 
                 <TabsContent value="stacks" className="mt-6">
                   <StackResults 
                     searchQuery={searchQuery}
                     filters={filters}
                     userPreferences={preferences}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="tools" className="mt-6">
-                  <ToolsLibrary 
-                    searchQuery={searchQuery}
-                    filters={filters}
                   />
                 </TabsContent>
                 
