@@ -52,7 +52,7 @@ const getComponentColor = (type: string) => {
   }
 };
 
-// Mock data for individual tools
+// Enhanced mock data generation that responds better to search queries
 const generateMockTools = (query: string, filters: FilterState): Tool[] => {
   const baseTools: Tool[] = [
     {
@@ -65,7 +65,7 @@ const generateMockTools = (query: string, filters: FilterState): Tool[] => {
       downloads: 5200,
       featured: true,
       complexity: 'beginner',
-      tags: ['customer-service', 'email', 'support'],
+      tags: ['customer-service', 'email', 'support', 'customers'],
       pricing: 'free'
     },
     {
@@ -133,7 +133,7 @@ const generateMockTools = (query: string, filters: FilterState): Tool[] => {
       downloads: 3500,
       featured: true,
       complexity: 'advanced',
-      tags: ['classification', 'automation', 'support'],
+      tags: ['classification', 'automation', 'support', 'customers'],
       pricing: 'freemium'
     },
     {
@@ -162,15 +162,87 @@ const generateMockTools = (query: string, filters: FilterState): Tool[] => {
       complexity: 'advanced',
       tags: ['analytics', 'insights', 'business'],
       pricing: 'free'
+    },
+    {
+      id: "9",
+      name: "Customer Acquisition Agent",
+      description: "AI agent that helps identify and engage potential customers automatically",
+      type: 'agent',
+      source: 'Custom',
+      rating: 4.7,
+      downloads: 6200,
+      featured: true,
+      complexity: 'intermediate',
+      tags: ['customer-acquisition', 'lead-generation', 'sales', 'customers'],
+      pricing: 'paid'
+    },
+    {
+      id: "10",
+      name: "Email Marketing Optimizer",
+      description: "Tool for optimizing email campaigns and improving open rates",
+      type: 'tool',
+      source: 'Mailchimp',
+      rating: 4.6,
+      downloads: 15600,
+      featured: false,
+      complexity: 'beginner',
+      tags: ['email-marketing', 'optimization', 'campaigns', 'customers'],
+      pricing: 'freemium'
+    },
+    {
+      id: "11",
+      name: "Lead Scoring Model",
+      description: "AI model that scores and ranks leads based on conversion probability",
+      type: 'model',
+      source: 'HubSpot',
+      rating: 4.8,
+      downloads: 9800,
+      featured: true,
+      complexity: 'advanced',
+      tags: ['lead-scoring', 'sales', 'conversion', 'customers'],
+      pricing: 'paid'
+    },
+    {
+      id: "12",
+      name: "Customer Retention Prompt",
+      description: "Comprehensive prompt for creating customer retention strategies",
+      type: 'prompt',
+      source: 'Community',
+      rating: 4.5,
+      downloads: 4300,
+      featured: false,
+      complexity: 'intermediate',
+      tags: ['retention', 'strategy', 'customer-success', 'customers'],
+      pricing: 'free'
     }
   ];
 
+  // If there's no query and no filters, show all tools
+  if (!query.trim() && 
+      filters.types.length === 0 && 
+      filters.sources.length === 0 && 
+      filters.complexity.length === 0 && 
+      filters.industries.length === 0) {
+    return baseTools;
+  }
+
   return baseTools.filter(tool => {
-    // Search query filter
-    if (query && !tool.name.toLowerCase().includes(query.toLowerCase()) && 
-        !tool.description.toLowerCase().includes(query.toLowerCase()) &&
-        !tool.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))) {
-      return false;
+    // Search query filter - more comprehensive matching
+    if (query.trim()) {
+      const searchTerms = query.toLowerCase().split(/\s+/);
+      const searchableText = [
+        tool.name.toLowerCase(),
+        tool.description.toLowerCase(),
+        ...tool.tags.map(tag => tag.toLowerCase()),
+        tool.type.toLowerCase(),
+        tool.source.toLowerCase()
+      ].join(' ');
+
+      const matchesSearch = searchTerms.some(term => 
+        searchableText.includes(term)
+      );
+
+      if (!matchesSearch) return false;
     }
 
     // Type filter
