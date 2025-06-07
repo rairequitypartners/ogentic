@@ -6,9 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StackDeployment } from "@/components/StackDeployment";
 import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
-import { Folder, Play, Trash2, Search } from "lucide-react";
+import { 
+  Folder, 
+  Play, 
+  Trash2, 
+  Search, 
+  Settings, 
+  ChevronDown, 
+  ChevronUp 
+} from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 type AIStack = Tables<'ai_stacks'>;
@@ -17,6 +26,7 @@ export default function MyStacks() {
   const { user, loading: authLoading } = useAuth();
   const [stacks, setStacks] = useState<AIStack[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedStack, setExpandedStack] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,6 +45,7 @@ export default function MyStacks() {
       const { data, error } = await supabase
         .from('ai_stacks')
         .select('*')
+        .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -51,7 +62,8 @@ export default function MyStacks() {
       const { error } = await supabase
         .from('ai_stacks')
         .delete()
-        .eq('id', stackId);
+        .eq('id', stackId)
+        .eq('user_id', user?.id);
 
       if (error) throw error;
       
@@ -64,6 +76,23 @@ export default function MyStacks() {
   const getComponentCount = (components: any) => {
     if (!components || !Array.isArray(components)) return 0;
     return components.length;
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'deployed':
+        return 'default';
+      case 'deploying':
+        return 'secondary';
+      case 'failed':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
+
+  const toggleExpanded = (stackId: string) => {
+    setExpandedStack(expandedStack === stackId ? null : stackId);
   };
 
   if (authLoading || !user) {
@@ -86,8 +115,8 @@ export default function MyStacks() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
+          <div className="grid grid-cols-1 gap-6">
+            {[...Array(3)].map((_, i) => (
               <Card key={i}>
                 <CardHeader>
                   <Skeleton className="h-6 w-3/4" />
@@ -111,18 +140,34 @@ export default function MyStacks() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-6">
             {stacks.map((stack) => (
               <Card key={stack.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{stack.title}</CardTitle>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg flex items-center space-x-2">
+                        <span>{stack.title}</span>
+                        <Badge variant={getStatusColor(stack.deployment_status || 'draft')}>
+                          {stack.deployment_status || 'draft'}
+                        </Badge>
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {stack.description}
+                      </p>
+                    </div>
                     <div className="flex space-x-1">
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => toggleExpanded(stack.id)}
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => {
-                          // Navigate to results page with this stack
                           navigate(`/results?stack=${stack.id}`);
                         }}
                       >
@@ -137,27 +182,47 @@ export default function MyStacks() {
                       </Button>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {stack.description}
-                  </p>
                 </CardHeader>
+                
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Components:</span>
-                      <Badge variant="secondary">
-                        {getComponentCount(stack.components)} items
-                      </Badge>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Components:</span>
+                        <Badge variant="secondary">
+                          {getComponentCount(stack.components)} items
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Visibility:</span>
+                        <Badge variant={stack.is_public ? "default" : "outline"}>
+                          {stack.is_public ? "Public" : "Private"}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Query:</span>
-                      <span className="text-xs bg-muted px-2 py-1 rounded truncate max-w-[150px]">
-                        {stack.query}
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
+                    
+                    <div className="text-xs text-muted-foreground border-t pt-3">
                       Created {new Date(stack.created_at).toLocaleDateString()}
+                      {stack.deployed_at && (
+                        <span className="ml-4">
+                          • Deployed {new Date(stack.deployed_at).toLocaleDateString()}
+                        </span>
+                      )}
                     </div>
+
+                    {expandedStack === stack.id && (
+                      <div className="border-t pt-4 animate-fade-in">
+                        <StackDeployment
+                          stackId={stack.id}
+                          title={stack.title}
+                          deploymentStatus={stack.deployment_status || 'draft'}
+                          isPublic={stack.is_public}
+                          deployedAt={stack.deployed_at || undefined}
+                          deploymentUrl={stack.deployment_url || undefined}
+                          onStatusChange={fetchStacks}
+                        />
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

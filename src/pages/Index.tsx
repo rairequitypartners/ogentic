@@ -28,7 +28,7 @@ const Index = () => {
   const [currentStackId, setCurrentStackId] = useState<string | null>(null);
   
   const { user } = useAuth();
-  const { saveStack, saveDeployment, saving } = useStacks();
+  const { saveStack, deployStack, saveDeployment, saving, deploying } = useStacks();
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
@@ -167,21 +167,40 @@ const Index = () => {
   };
 
   const handleDeployConfirm = async (selectedOptions: string[]) => {
-    // Mock deployment results
-    const results = selectedOptions.map(option => ({
-      platform: option.charAt(0).toUpperCase() + option.slice(1).replace('-', ' '),
-      status: 'success' as const,
-      message: `Successfully deployed stack components to ${option.replace('-', ' ')}`
-    }));
-    
-    setDeploymentResults(results);
+    if (currentStackId) {
+      // Use the new deployStack function instead of mock deployment
+      const success = await deployStack(currentStackId, selectedOptions);
+      
+      if (success) {
+        // Mock deployment results for the success screen
+        const results = selectedOptions.map(option => ({
+          platform: option.charAt(0).toUpperCase() + option.slice(1).replace('-', ' '),
+          status: 'success' as const,
+          message: `Successfully deployed stack components to ${option.replace('-', ' ')}`
+        }));
+        
+        setDeploymentResults(results);
+        setCurrentState('success');
+      } else {
+        // Stay on deploy screen if deployment failed
+        setCurrentState('deploy');
+      }
+    } else {
+      // Fallback to old behavior if no stack ID
+      const results = selectedOptions.map(option => ({
+        platform: option.charAt(0).toUpperCase() + option.slice(1).replace('-', ' '),
+        status: 'success' as const,
+        message: `Successfully deployed stack components to ${option.replace('-', ' ')}`
+      }));
+      
+      setDeploymentResults(results);
 
-    // Save deployment record if user is logged in and we have a stack ID
-    if (user && currentStackId) {
-      await saveDeployment(currentStackId, selectedOptions, results);
+      if (user && currentStackId) {
+        await saveDeployment(currentStackId, selectedOptions, results);
+      }
+
+      setCurrentState('success');
     }
-
-    setCurrentState('success');
   };
 
   const handleDeployCancel = () => {

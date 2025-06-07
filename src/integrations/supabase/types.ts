@@ -13,6 +13,9 @@ export type Database = {
         Row: {
           components: Json
           created_at: string
+          deployed_at: string | null
+          deployment_status: string | null
+          deployment_url: string | null
           description: string
           id: string
           is_public: boolean
@@ -24,6 +27,9 @@ export type Database = {
         Insert: {
           components?: Json
           created_at?: string
+          deployed_at?: string | null
+          deployment_status?: string | null
+          deployment_url?: string | null
           description: string
           id?: string
           is_public?: boolean
@@ -35,6 +41,9 @@ export type Database = {
         Update: {
           components?: Json
           created_at?: string
+          deployed_at?: string | null
+          deployment_status?: string | null
+          deployment_url?: string | null
           description?: string
           id?: string
           is_public?: boolean

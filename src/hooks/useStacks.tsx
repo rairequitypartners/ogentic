@@ -24,6 +24,7 @@ export const useStacks = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
+  const [deploying, setDeploying] = useState(false);
 
   const saveStack = async (query: string, stackData: StackData): Promise<string | null> => {
     if (!user) {
@@ -45,7 +46,8 @@ export const useStacks = () => {
           description: stackData.description,
           query: query,
           components: stackData.components as any,
-          is_public: false
+          is_public: false,
+          deployment_status: 'draft'
         })
         .select()
         .single();
@@ -68,6 +70,91 @@ export const useStacks = () => {
       return null;
     } finally {
       setSaving(false);
+    }
+  };
+
+  const deployStack = async (stackId: string, platforms: string[]): Promise<boolean> => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to deploy stacks.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    setDeploying(true);
+    try {
+      // Update stack status to deploying
+      const { error: updateError } = await supabase
+        .from('ai_stacks')
+        .update({
+          deployment_status: 'deploying',
+          is_public: true
+        })
+        .eq('id', stackId)
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      // Simulate deployment process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Create deployment records for each platform
+      const deployments = platforms.map(platform => ({
+        user_id: user.id,
+        stack_id: stackId,
+        platform: platform.charAt(0).toUpperCase() + platform.slice(1).replace('-', ' '),
+        status: 'success',
+        message: `Successfully deployed to ${platform.replace('-', ' ')}`
+      }));
+
+      const { error: deploymentError } = await supabase
+        .from('deployments')
+        .insert(deployments);
+
+      if (deploymentError) throw deploymentError;
+
+      // Update stack status to deployed
+      const { error: finalUpdateError } = await supabase
+        .from('ai_stacks')
+        .update({
+          deployment_status: 'deployed',
+          deployed_at: new Date().toISOString(),
+          deployment_url: `https://app.example.com/stacks/${stackId}`
+        })
+        .eq('id', stackId)
+        .eq('user_id', user.id);
+
+      if (finalUpdateError) throw finalUpdateError;
+
+      toast({
+        title: "Stack deployed successfully!",
+        description: `Your stack has been deployed to ${platforms.length} platform${platforms.length !== 1 ? 's' : ''}.`
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error deploying stack:', error);
+      
+      // Update stack status to failed
+      await supabase
+        .from('ai_stacks')
+        .update({
+          deployment_status: 'failed'
+        })
+        .eq('id', stackId)
+        .eq('user_id', user.id);
+
+      toast({
+        title: "Deployment failed",
+        description: "There was an error deploying your stack. Please try again.",
+        variant: "destructive"
+      });
+
+      return false;
+    } finally {
+      setDeploying(false);
     }
   };
 
@@ -95,7 +182,9 @@ export const useStacks = () => {
 
   return {
     saveStack,
+    deployStack,
     saveDeployment,
-    saving
+    saving,
+    deploying
   };
 };
