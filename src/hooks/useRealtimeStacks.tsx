@@ -49,7 +49,7 @@ export const useRealtimeStacks = (query?: string) => {
       } else {
         const transformedStacks = data?.map(stack => ({
           ...stack,
-          components: Array.isArray(stack.components) ? stack.components as StackComponent[] : []
+          components: Array.isArray(stack.components) ? stack.components as unknown as StackComponent[] : []
         })) as RealtimeStack[] || [];
         setStacks(transformedStacks);
       }
@@ -74,7 +74,7 @@ export const useRealtimeStacks = (query?: string) => {
           const newStackData = payload.new as Tables<'ai_stacks'>;
           const newStack: RealtimeStack = {
             ...newStackData,
-            components: Array.isArray(newStackData.components) ? newStackData.components as StackComponent[] : []
+            components: Array.isArray(newStackData.components) ? newStackData.components as unknown as StackComponent[] : []
           };
           
           if (!query || 
@@ -98,7 +98,7 @@ export const useRealtimeStacks = (query?: string) => {
           const updatedStackData = payload.new as Tables<'ai_stacks'>;
           const updatedStack: RealtimeStack = {
             ...updatedStackData,
-            components: Array.isArray(updatedStackData.components) ? updatedStackData.components as StackComponent[] : []
+            components: Array.isArray(updatedStackData.components) ? updatedStackData.components as unknown as StackComponent[] : []
           };
           
           setStacks(prev => prev.map(stack => 
