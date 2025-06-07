@@ -1,7 +1,7 @@
-
 import { useState } from "react";
 import { SearchBar } from "@/components/SearchBar";
 import { StackCard } from "@/components/StackCard";
+import { RealtimeStackResults } from "@/components/RealtimeStackResults";
 import { DeployPanel } from "@/components/DeployPanel";
 import { SuccessScreen } from "@/components/SuccessScreen";
 import { Header } from "@/components/Header";
@@ -199,6 +199,11 @@ const Index = () => {
     setCurrentState('results');
   };
 
+  const handleSelectCommunityStack = (stack: any) => {
+    setSelectedStack(stack);
+    // Don't auto-save community stacks, let user decide
+  };
+
   const renderContent = () => {
     switch (currentState) {
       case 'search':
@@ -228,9 +233,9 @@ const Index = () => {
                   </div>
                   <div className="p-6 rounded-xl bg-card border card-hover">
                     <Zap className="h-8 w-8 text-primary mb-4 mx-auto" />
-                    <h3 className="font-semibold mb-2">One-Click Deployment</h3>
+                    <h3 className="font-semibold mb-2">Real-Time Updates</h3>
                     <p className="text-sm text-muted-foreground">
-                      Deploy your AI stacks directly to Notion, Zapier, Slack, and other tools you already use.
+                      See live community recommendations and updates as other users create and share new AI stacks.
                     </p>
                   </div>
                   <div className="p-6 rounded-xl bg-card border card-hover">
@@ -251,7 +256,7 @@ const Index = () => {
           <>
             <Header />
             <div className="min-h-screen bg-background p-4 pt-16">
-              <div className="max-w-6xl mx-auto">
+              <div className="max-w-6xl mx-auto space-y-8">
                 <div className="mb-8">
                   <h2 className="text-3xl font-bold mb-2">Results for: "{searchQuery}"</h2>
                   <p className="text-muted-foreground">Here's the perfect AI stack for your needs</p>
@@ -270,6 +275,11 @@ const Index = () => {
                     onReplace={(component) => console.log('Replace:', component)}
                   />
                 )}
+
+                <RealtimeStackResults 
+                  query={searchQuery}
+                  onSelectStack={handleSelectCommunityStack}
+                />
               </div>
             </div>
           </>
