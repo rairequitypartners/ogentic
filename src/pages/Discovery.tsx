@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
-import { SearchBar } from "@/components/SearchBar";
+import { AIEnhancedSearch } from "@/components/discovery/AIEnhancedSearch";
 import { DiscoveryFilters } from "@/components/discovery/DiscoveryFilters";
 import { StackResults } from "@/components/discovery/StackResults";
 import { ToolsLibrary } from "@/components/discovery/ToolsLibrary";
@@ -45,13 +45,14 @@ const Discovery = () => {
           <div className="space-y-4">
             <h1 className="text-4xl font-bold text-gradient">AI Stack Discovery</h1>
             <p className="text-xl text-muted-foreground">
-              Discover, filter, and explore the best AI tools, prompts, models, and complete stacks for your needs
+              Discover, filter, and explore the best AI tools, prompts, models, and complete stacks using natural language
             </p>
             
-            <SearchBar 
+            <AIEnhancedSearch 
               onSearch={handleSearch}
-              placeholder="Search for AI tools, prompts, models, or describe your use case..."
-              className="max-w-4xl"
+              onFiltersChange={handleFilterChange}
+              userPreferences={preferences}
+              context={activeTab as any}
             />
           </div>
 
@@ -71,7 +72,7 @@ const Discovery = () => {
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="stacks">Complete Stacks</TabsTrigger>
                   <TabsTrigger value="tools">Individual Tools</TabsTrigger>
-                  <TabsTrigger value="recommended">Recommended</TabsTrigger>
+                  <TabsTrigger value="recommended">AI Recommended</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="stacks" className="mt-6">
