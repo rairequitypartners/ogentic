@@ -1,15 +1,18 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { AIEnhancedSearch } from "@/components/discovery/AIEnhancedSearch";
 import { DiscoveryFilters } from "@/components/discovery/DiscoveryFilters";
-import { StackResults } from "@/components/discovery/StackResults";
-import { ToolsLibrary } from "@/components/discovery/ToolsLibrary";
-import { RecommendedStacks } from "@/components/discovery/RecommendedStacks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToolCardSkeleton, StackCardSkeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+
+// Lazy load heavy components
+const StackResults = lazy(() => import("@/components/discovery/StackResults").then(m => ({ default: m.StackResults })));
+const ToolsLibrary = lazy(() => import("@/components/discovery/ToolsLibrary").then(m => ({ default: m.ToolsLibrary })));
+const RecommendedStacks = lazy(() => import("@/components/discovery/RecommendedStacks").then(m => ({ default: m.RecommendedStacks })));
 
 interface FilterState {
   types: string[];
@@ -17,6 +20,33 @@ interface FilterState {
   complexity: string[];
   industries: string[];
 }
+
+// Loading components for each tab
+const ToolsLoadingFallback = () => (
+  <div className="space-y-4">
+    <div className="flex items-center space-x-2 text-primary">
+      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+      <span>Loading tools...</span>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {[...Array(4)].map((_, i) => (
+        <ToolCardSkeleton key={i} />
+      ))}
+    </div>
+  </div>
+);
+
+const StacksLoadingFallback = () => (
+  <div className="space-y-4">
+    <div className="flex items-center space-x-2 text-primary">
+      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+      <span>Loading stacks...</span>
+    </div>
+    {[...Array(2)].map((_, i) => (
+      <StackCardSkeleton key={i} />
+    ))}
+  </div>
+);
 
 const Discovery = () => {
   const { user } = useAuth();
@@ -93,25 +123,31 @@ const Discovery = () => {
                 </TabsList>
                 
                 <TabsContent value="tools" className="mt-6">
-                  <ToolsLibrary 
-                    searchQuery={searchQuery}
-                    filters={filters}
-                  />
+                  <Suspense fallback={<ToolsLoadingFallback />}>
+                    <ToolsLibrary 
+                      searchQuery={searchQuery}
+                      filters={filters}
+                    />
+                  </Suspense>
                 </TabsContent>
                 
                 <TabsContent value="stacks" className="mt-6">
-                  <StackResults 
-                    searchQuery={searchQuery}
-                    filters={filters}
-                    userPreferences={preferences}
-                  />
+                  <Suspense fallback={<StacksLoadingFallback />}>
+                    <StackResults 
+                      searchQuery={searchQuery}
+                      filters={filters}
+                      userPreferences={preferences}
+                    />
+                  </Suspense>
                 </TabsContent>
                 
                 <TabsContent value="recommended" className="mt-6">
-                  <RecommendedStacks 
-                    userPreferences={preferences}
-                    searchQuery={searchQuery}
-                  />
+                  <Suspense fallback={<StacksLoadingFallback />}>
+                    <RecommendedStacks 
+                      userPreferences={preferences}
+                      searchQuery={searchQuery}
+                    />
+                  </Suspense>
                 </TabsContent>
               </Tabs>
             </div>
