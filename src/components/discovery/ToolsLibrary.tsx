@@ -1,9 +1,8 @@
-
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bot, FileText, Wrench, Zap, Star, Download, ExternalLink } from "lucide-react";
+import { Bot, FileText, Wrench, Zap, Star, Download, ExternalLink, Brain, Search, Sparkles } from "lucide-react";
 import { useAIDiscovery } from "@/hooks/useAIDiscovery";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { ToolCardSkeleton } from "@/components/ui/skeleton";
@@ -203,6 +202,7 @@ export const ToolsLibrary = ({ searchQuery, filters }: ToolsLibraryProps) => {
   const [priorityTools, setPriorityTools] = useState<Tool[]>([]);
   const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'rating' | 'downloads' | 'name'>('rating');
+  const [progressStatus, setProgressStatus] = useState<string>('');
 
   // Memoized filter function
   const applyFilters = useCallback((toolsToFilter: Tool[]) => {
@@ -248,18 +248,34 @@ export const ToolsLibrary = ({ searchQuery, filters }: ToolsLibraryProps) => {
     }
   }, [searchQuery, filters, applyFilters, searchTools]);
 
-  // Fetch AI-powered tools
+  // Fetch AI-powered tools with progress updates
   useEffect(() => {
     const fetchTools = async () => {
       if (!searchQuery.trim()) {
         setTools([]);
         setPriorityTools([]);
+        setProgressStatus('');
         return;
       }
 
       setLoading(true);
       
       try {
+        // Progress status updates
+        setProgressStatus('🧠 Analyzing your request...');
+        
+        setTimeout(() => {
+          if (loading) setProgressStatus('🔍 Searching AI tool databases...');
+        }, 800);
+        
+        setTimeout(() => {
+          if (loading) setProgressStatus('✨ Matching tools to your needs...');
+        }, 1600);
+        
+        setTimeout(() => {
+          if (loading) setProgressStatus('📊 Ranking and filtering results...');
+        }, 2400);
+
         console.log('Fetching AI-powered tool recommendations for:', searchQuery);
         
         const aiResults = await parseQuery(searchQuery, preferences, 'tools');
@@ -271,13 +287,20 @@ export const ToolsLibrary = ({ searchQuery, filters }: ToolsLibraryProps) => {
           
           console.log('AI-generated tools:', filteredAITools);
           setTools(filteredAITools);
+          setProgressStatus('✅ Tools discovered successfully!');
+          
+          // Clear success message after 2 seconds
+          setTimeout(() => setProgressStatus(''), 2000);
         } else {
           console.log('No AI results, showing priority tools only');
           setTools([]);
+          setProgressStatus('');
         }
       } catch (error) {
         console.error('Error fetching AI tools:', error);
         setTools([]);
+        setProgressStatus('⚠️ Search completed with limited results');
+        setTimeout(() => setProgressStatus(''), 3000);
       }
       
       setLoading(false);
@@ -285,7 +308,10 @@ export const ToolsLibrary = ({ searchQuery, filters }: ToolsLibraryProps) => {
 
     // Debounce the API call
     const timeoutId = setTimeout(fetchTools, 300);
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+      setProgressStatus('');
+    };
   }, [searchQuery, filters, parseQuery, preferences, applyFilters]);
 
   // Memoized sorted tools
@@ -312,23 +338,41 @@ export const ToolsLibrary = ({ searchQuery, filters }: ToolsLibraryProps) => {
       <div className="space-y-4">
         <div className="flex items-center space-x-2 text-primary">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-          <span>Discovering AI tools...</span>
+          <span>{progressStatus || 'Discovering AI tools...'}</span>
         </div>
+        
+        {progressStatus && (
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg">
+            <div className="flex items-center space-x-2">
+              {progressStatus.includes('Analyzing') && <Brain className="h-4 w-4 text-blue-600" />}
+              {progressStatus.includes('Searching') && <Search className="h-4 w-4 text-blue-600" />}
+              {progressStatus.includes('Matching') && <Sparkles className="h-4 w-4 text-blue-600" />}
+              {progressStatus.includes('Ranking') && <Star className="h-4 w-4 text-blue-600" />}
+              <span className="text-sm text-blue-800">{progressStatus}</span>
+            </div>
+          </div>
+        )}
         
         {/* Show priority tools immediately */}
         {priorityTools.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            {priorityTools.map((tool) => (
-              <ToolCard key={tool.id} tool={tool} />
-            ))}
+          <div>
+            <h4 className="text-sm font-medium text-muted-foreground mb-3">Quick Results</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              {priorityTools.map((tool) => (
+                <ToolCard key={tool.id} tool={tool} />
+              ))}
+            </div>
           </div>
         )}
         
         {/* Show skeletons for loading tools */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <ToolCardSkeleton key={i} />
-          ))}
+        <div>
+          <h4 className="text-sm font-medium text-muted-foreground mb-3">AI-Powered Recommendations</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <ToolCardSkeleton key={i} />
+            ))}
+          </div>
         </div>
       </div>
     );
