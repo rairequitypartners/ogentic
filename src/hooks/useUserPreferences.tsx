@@ -67,25 +67,52 @@ export const useUserPreferences = () => {
 
     setSaving(true);
     try {
-      const { error } = await supabase
+      // First, check if preferences already exist
+      const { data: existingPrefs } = await supabase
         .from('user_preferences')
-        .upsert({
-          user_id: user.id,
-          industry: data.industry,
-          output_tone: data.outputTone,
-          preferred_models: data.preferredModels,
-          bias_preference: data.biasPreference,
-          dataset_preference: data.datasetPreference,
-          ux_complexity: data.uxComplexity,
-          use_cases: data.useCases,
-          experience_level: data.experienceLevel,
-          onboarding_completed: true,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
 
-      if (error) throw error;
+      if (existingPrefs) {
+        // Update existing preferences
+        const { error } = await supabase
+          .from('user_preferences')
+          .update({
+            industry: data.industry,
+            output_tone: data.outputTone,
+            preferred_models: data.preferredModels,
+            bias_preference: data.biasPreference,
+            dataset_preference: data.datasetPreference,
+            ux_complexity: data.uxComplexity,
+            use_cases: data.useCases,
+            experience_level: data.experienceLevel,
+            onboarding_completed: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new preferences
+        const { error } = await supabase
+          .from('user_preferences')
+          .insert({
+            user_id: user.id,
+            industry: data.industry,
+            output_tone: data.outputTone,
+            preferred_models: data.preferredModels,
+            bias_preference: data.biasPreference,
+            dataset_preference: data.datasetPreference,
+            ux_complexity: data.uxComplexity,
+            use_cases: data.useCases,
+            experience_level: data.experienceLevel,
+            onboarding_completed: true,
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) throw error;
+      }
 
       // Update profiles table
       await supabase
