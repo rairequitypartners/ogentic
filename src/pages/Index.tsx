@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { SearchBar } from "@/components/SearchBar";
 import { StackCard } from "@/components/StackCard";
 import { RealtimeStackResults } from "@/components/RealtimeStackResults";
@@ -21,14 +22,22 @@ interface StackComponent {
 }
 
 const Index = () => {
+  const { user, needsOnboarding, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [currentState, setCurrentState] = useState<AppState>('search');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStack, setSelectedStack] = useState<any>(null);
   const [deploymentResults, setDeploymentResults] = useState<any[]>([]);
   const [currentStackId, setCurrentStackId] = useState<string | null>(null);
   
-  const { user } = useAuth();
   const { saveStack, deployStack, saveDeployment, saving, deploying } = useStacks();
+
+  // Redirect to onboarding if user needs it
+  useEffect(() => {
+    if (!authLoading && user && needsOnboarding) {
+      navigate("/onboarding");
+    }
+  }, [user, needsOnboarding, authLoading, navigate]);
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);

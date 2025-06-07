@@ -99,6 +99,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          onboarding_completed: boolean | null
           updated_at: string
         }
         Insert: {
@@ -107,6 +108,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          onboarding_completed?: boolean | null
           updated_at?: string
         }
         Update: {
@@ -115,7 +117,56 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          onboarding_completed?: boolean | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          bias_preference: string | null
+          created_at: string
+          dataset_preference: string | null
+          experience_level: string | null
+          id: string
+          industry: string | null
+          onboarding_completed: boolean | null
+          output_tone: string | null
+          preferred_models: string[] | null
+          updated_at: string
+          use_cases: string[] | null
+          user_id: string
+          ux_complexity: string | null
+        }
+        Insert: {
+          bias_preference?: string | null
+          created_at?: string
+          dataset_preference?: string | null
+          experience_level?: string | null
+          id?: string
+          industry?: string | null
+          onboarding_completed?: boolean | null
+          output_tone?: string | null
+          preferred_models?: string[] | null
+          updated_at?: string
+          use_cases?: string[] | null
+          user_id: string
+          ux_complexity?: string | null
+        }
+        Update: {
+          bias_preference?: string | null
+          created_at?: string
+          dataset_preference?: string | null
+          experience_level?: string | null
+          id?: string
+          industry?: string | null
+          onboarding_completed?: boolean | null
+          output_tone?: string | null
+          preferred_models?: string[] | null
+          updated_at?: string
+          use_cases?: string[] | null
+          user_id?: string
+          ux_complexity?: string | null
         }
         Relationships: []
       }
