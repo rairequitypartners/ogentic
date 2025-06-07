@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -33,6 +32,20 @@ export const Header = () => {
           <Sparkles className="h-6 w-6 text-primary" />
           <span className="text-xl font-bold text-gradient">Ogentic</span>
         </Link>
+        
+        <nav className="hidden md:flex items-center space-x-8">
+          <Link to="/" className="text-foreground hover:text-primary transition-colors">
+            Home
+          </Link>
+          <Link to="/discovery" className="text-foreground hover:text-primary transition-colors">
+            Discovery
+          </Link>
+          {user && (
+            <Link to="/my-stacks" className="text-foreground hover:text-primary transition-colors">
+              My Stacks
+            </Link>
+          )}
+        </nav>
         
         <div className="flex items-center space-x-4">
           {user ? (
