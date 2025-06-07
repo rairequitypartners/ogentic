@@ -12,7 +12,15 @@ interface StackComponent {
   featured?: boolean;
 }
 
-interface RealtimeStack extends Tables<'ai_stacks'> {
+interface RealtimeStack {
+  id: string;
+  title: string;
+  description: string;
+  query: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  is_public: boolean;
   components: StackComponent[];
 }
 
@@ -39,7 +47,11 @@ export const useRealtimeStacks = (query?: string) => {
       if (error) {
         console.error('Error fetching stacks:', error);
       } else {
-        setStacks(data as RealtimeStack[] || []);
+        const transformedStacks = data?.map(stack => ({
+          ...stack,
+          components: Array.isArray(stack.components) ? stack.components as StackComponent[] : []
+        })) as RealtimeStack[] || [];
+        setStacks(transformedStacks);
       }
       setLoading(false);
     };
@@ -59,7 +71,12 @@ export const useRealtimeStacks = (query?: string) => {
         },
         (payload) => {
           console.log('New stack added:', payload);
-          const newStack = payload.new as RealtimeStack;
+          const newStackData = payload.new as Tables<'ai_stacks'>;
+          const newStack: RealtimeStack = {
+            ...newStackData,
+            components: Array.isArray(newStackData.components) ? newStackData.components as StackComponent[] : []
+          };
+          
           if (!query || 
               newStack.title.toLowerCase().includes(query.toLowerCase()) ||
               newStack.description.toLowerCase().includes(query.toLowerCase()) ||
@@ -78,7 +95,12 @@ export const useRealtimeStacks = (query?: string) => {
         },
         (payload) => {
           console.log('Stack updated:', payload);
-          const updatedStack = payload.new as RealtimeStack;
+          const updatedStackData = payload.new as Tables<'ai_stacks'>;
+          const updatedStack: RealtimeStack = {
+            ...updatedStackData,
+            components: Array.isArray(updatedStackData.components) ? updatedStackData.components as StackComponent[] : []
+          };
+          
           setStacks(prev => prev.map(stack => 
             stack.id === updatedStack.id ? updatedStack : stack
           ));
@@ -93,8 +115,8 @@ export const useRealtimeStacks = (query?: string) => {
         },
         (payload) => {
           console.log('Stack deleted:', payload);
-          const deletedStack = payload.old as RealtimeStack;
-          setStacks(prev => prev.filter(stack => stack.id !== deletedStack.id));
+          const deletedStackData = payload.old as Tables<'ai_stacks'>;
+          setStacks(prev => prev.filter(stack => stack.id !== deletedStackData.id));
         }
       )
       .subscribe();
