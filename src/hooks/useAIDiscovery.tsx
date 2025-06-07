@@ -2,6 +2,28 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+interface StackComponent {
+  type: 'prompt' | 'tool' | 'model' | 'agent';
+  name: string;
+  description: string;
+  reason: string;
+  source?: string;
+  featured?: boolean;
+  url?: string;
+  pricing?: string;
+}
+
+interface GeneratedStack {
+  title: string;
+  description: string;
+  components: StackComponent[];
+  useCase: string;
+  industry: string;
+  complexity: string;
+  estimatedSetupTime: string;
+  benefits: string[];
+}
+
 interface ParsedQuery {
   intent: string;
   filters: {
@@ -12,6 +34,7 @@ interface ParsedQuery {
   };
   keywords: string[];
   suggestions: string[];
+  generatedStacks?: GeneratedStack[];
 }
 
 interface UseAIDiscoveryResult {
@@ -34,7 +57,12 @@ export const useAIDiscovery = (): UseAIDiscoveryResult => {
 
     try {
       const { data, error: functionError } = await supabase.functions.invoke('ai-discovery', {
-        body: { query, userPreferences, context }
+        body: { 
+          query, 
+          userPreferences, 
+          context,
+          generateStacks: true
+        }
       });
 
       if (functionError) {
@@ -58,7 +86,8 @@ export const useAIDiscovery = (): UseAIDiscoveryResult => {
         intent: `Find AI tools related to: ${query}`,
         filters: { types: [], sources: [], complexity: [], industries: [] },
         keywords: query.split(' ').filter(word => word.length > 2),
-        suggestions: ['Try being more specific', 'Mention your industry or use case']
+        suggestions: ['Try being more specific', 'Mention your industry or use case'],
+        generatedStacks: []
       };
     } finally {
       setLoading(false);

@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bot, FileText, Wrench, Zap, Users, Clock, Star } from "lucide-react";
+import { Bot, FileText, Wrench, Zap, Users, Clock, Star, ExternalLink, DollarSign, Lightbulb } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useAIDiscovery } from "@/hooks/useAIDiscovery";
 
 interface FilterState {
   types: string[];
@@ -26,19 +27,19 @@ interface StackComponent {
   reason: string;
   source?: string;
   featured?: boolean;
+  url?: string;
+  pricing?: string;
 }
 
-interface Stack {
-  id: string;
+interface GeneratedStack {
   title: string;
   description: string;
   components: StackComponent[];
-  rating: number;
-  usageCount: number;
-  created_at: string;
-  tags: string[];
-  complexity: string;
+  useCase: string;
   industry: string;
+  complexity: string;
+  estimatedSetupTime: string;
+  benefits: string[];
 }
 
 const getComponentIcon = (type: string) => {
@@ -61,131 +62,51 @@ const getComponentColor = (type: string) => {
   }
 };
 
-// Mock data for demonstration
-const generateMockStacks = (query: string, filters: FilterState): Stack[] => {
-  const baseStacks: Stack[] = [
-    {
-      id: "1",
-      title: "Customer Support Automation Stack",
-      description: "Complete AI-powered solution for automating customer support with intelligent routing and responses",
-      components: [
-        { type: 'prompt', name: 'Support Email Template', description: 'Professional customer support responses', reason: 'Optimized for empathy and problem resolution', source: 'OpenAI', featured: true },
-        { type: 'model', name: 'GPT-4o', description: 'Advanced language model for customer communication', reason: 'Excellent at maintaining consistent tone', source: 'OpenAI' },
-        { type: 'tool', name: 'Zendesk Integration', description: 'Automated ticket management', reason: 'Seamless workflow integration', source: 'Zendesk' },
-        { type: 'agent', name: 'Priority Classifier', description: 'AI agent for urgent ticket detection', reason: 'Reduces response time for critical issues', source: 'Custom' }
-      ],
-      rating: 4.8,
-      usageCount: 1250,
-      created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
-      tags: ['customer-service', 'automation', 'email'],
-      complexity: 'intermediate',
-      industry: 'ecommerce'
-    },
-    {
-      id: "2",
-      title: "Content Marketing Generator",
-      description: "AI-powered content creation and scheduling for social media marketing",
-      components: [
-        { type: 'prompt', name: 'Social Media Creator', description: 'Platform-specific content generation', reason: 'Tailored for each social platform', source: 'Custom', featured: true },
-        { type: 'model', name: 'Claude-3 Haiku', description: 'Creative writing model', reason: 'Excellent at maintaining brand voice', source: 'Anthropic' },
-        { type: 'tool', name: 'Buffer Scheduler', description: 'Automated posting', reason: 'Optimal timing for engagement', source: 'Buffer' },
-        { type: 'agent', name: 'Performance Optimizer', description: 'Content performance analysis', reason: 'Learns from engagement metrics', source: 'Custom' }
-      ],
-      rating: 4.6,
-      usageCount: 890,
-      created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-      tags: ['marketing', 'social-media', 'content'],
-      complexity: 'beginner',
-      industry: 'marketing'
-    },
-    {
-      id: "3",
-      title: "Data Analysis & Reporting Suite",
-      description: "Comprehensive AI solution for data analysis, visualization, and automated reporting",
-      components: [
-        { type: 'prompt', name: 'Data Insights Generator', description: 'Generates business insights from data', reason: 'Transforms raw data into actionable insights', source: 'Custom', featured: true },
-        { type: 'model', name: 'GPT-4o', description: 'Advanced reasoning for data interpretation', reason: 'Superior analytical capabilities', source: 'OpenAI' },
-        { type: 'tool', name: 'Tableau Integration', description: 'Advanced data visualization', reason: 'Professional-grade charts and dashboards', source: 'Tableau' },
-        { type: 'agent', name: 'Anomaly Detector', description: 'Identifies unusual patterns in data', reason: 'Proactive issue identification', source: 'Custom' }
-      ],
-      rating: 4.9,
-      usageCount: 2100,
-      created_at: new Date(Date.now() - 86400000 * 14).toISOString(),
-      tags: ['analytics', 'reporting', 'business-intelligence'],
-      complexity: 'advanced',
-      industry: 'finance'
-    }
-  ];
-
-  // Filter stacks based on search query and filters
-  return baseStacks.filter(stack => {
-    // Search query filter
-    if (query && !stack.title.toLowerCase().includes(query.toLowerCase()) && 
-        !stack.description.toLowerCase().includes(query.toLowerCase()) &&
-        !stack.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))) {
-      return false;
-    }
-
-    // Type filter
-    if (filters.types.length > 0) {
-      const hasMatchingType = stack.components.some(component => 
-        filters.types.includes(component.type)
-      );
-      if (!hasMatchingType) return false;
-    }
-
-    // Complexity filter
-    if (filters.complexity.length > 0 && !filters.complexity.includes(stack.complexity)) {
-      return false;
-    }
-
-    // Industry filter
-    if (filters.industries.length > 0 && !filters.industries.includes(stack.industry)) {
-      return false;
-    }
-
-    // Source filter
-    if (filters.sources.length > 0) {
-      const hasMatchingSource = stack.components.some(component => 
-        component.source && filters.sources.includes(component.source.toLowerCase())
-      );
-      if (!hasMatchingSource) return false;
-    }
-
-    return true;
-  });
+const getPricingIcon = (pricing?: string) => {
+  if (pricing === 'free') return '🆓';
+  if (pricing === 'paid') return '💰';
+  if (pricing === 'freemium') return '⭐';
+  return '';
 };
 
 export const StackResults = ({ searchQuery, filters, userPreferences }: StackResultsProps) => {
-  const [stacks, setStacks] = useState<Stack[]>([]);
+  const [aiStacks, setAiStacks] = useState<GeneratedStack[]>([]);
   const [loading, setLoading] = useState(false);
+  const { parseQuery } = useAIDiscovery();
 
   useEffect(() => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      const results = generateMockStacks(searchQuery, filters);
-      setStacks(results);
-      setLoading(false);
-    }, 500);
-  }, [searchQuery, filters]);
+    if (searchQuery.trim().length > 3) {
+      setLoading(true);
+      parseQuery(searchQuery, userPreferences, 'stacks')
+        .then(result => {
+          setAiStacks(result.generatedStacks || []);
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error('Failed to get AI stacks:', error);
+          setLoading(false);
+        });
+    } else {
+      setAiStacks([]);
+    }
+  }, [searchQuery, userPreferences, parseQuery]);
 
   if (loading) {
     return (
       <div className="space-y-4">
         <div className="flex items-center space-x-2 text-primary">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-          <span>Finding AI stacks...</span>
+          <span>AI is generating comprehensive stacks for your needs...</span>
         </div>
-        {[...Array(3)].map((_, i) => (
+        {[...Array(2)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-6">
               <div className="space-y-3">
                 <div className="h-4 bg-muted rounded w-3/4"></div>
                 <div className="h-3 bg-muted rounded w-1/2"></div>
-                <div className="flex space-x-2">
-                  {[...Array(3)].map((_, j) => (
-                    <div key={j} className="h-6 bg-muted rounded w-16"></div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[...Array(6)].map((_, j) => (
+                    <div key={j} className="h-12 bg-muted rounded"></div>
                   ))}
                 </div>
               </div>
@@ -196,15 +117,31 @@ export const StackResults = ({ searchQuery, filters, userPreferences }: StackRes
     );
   }
 
-  if (stacks.length === 0) {
+  if (aiStacks.length === 0 && searchQuery.trim().length > 3) {
     return (
       <Card>
         <CardContent className="p-6 text-center">
           <p className="text-muted-foreground mb-4">
-            No stacks found matching your criteria.
+            No AI-generated stacks found for your query.
           </p>
           <p className="text-sm text-muted-foreground">
-            Try adjusting your search query or filters to see more results.
+            Try refining your search or being more specific about your use case.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (searchQuery.trim().length <= 3) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <Bot className="h-12 w-12 mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground mb-2">
+            Search for AI stacks using natural language
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Try: "customer support automation for ecommerce" or "content creation workflow"
           </p>
         </CardContent>
       </Card>
@@ -212,36 +149,24 @@ export const StackResults = ({ searchQuery, filters, userPreferences }: StackRes
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">
-          {stacks.length} Stack{stacks.length !== 1 ? 's' : ''} Found
+          {aiStacks.length} AI-Generated Stack{aiStacks.length !== 1 ? 's' : ''} Found
         </h3>
+        <Badge variant="secondary" className="flex items-center space-x-1">
+          <Zap className="h-3 w-3" />
+          <span>AI Generated</span>
+        </Badge>
       </div>
       
-      {stacks.map((stack) => (
-        <Card key={stack.id} className="card-hover">
+      {aiStacks.map((stack, index) => (
+        <Card key={index} className="card-hover border-primary/20">
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
-                  <CardTitle className="text-lg">{stack.title}</CardTitle>
-                  <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span>{stack.rating}</span>
-                  </div>
-                </div>
-                <CardDescription className="mb-3">{stack.description}</CardDescription>
-                
-                <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-3">
-                  <div className="flex items-center space-x-1">
-                    <Users className="h-4 w-4" />
-                    <span>{stack.usageCount} uses</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Clock className="h-4 w-4" />
-                    <span>{formatDistanceToNow(new Date(stack.created_at), { addSuffix: true })}</span>
-                  </div>
+                  <CardTitle className="text-xl">{stack.title}</CardTitle>
                   <Badge variant="outline" className="text-xs">
                     {stack.complexity}
                   </Badge>
@@ -249,47 +174,110 @@ export const StackResults = ({ searchQuery, filters, userPreferences }: StackRes
                     {stack.industry}
                   </Badge>
                 </div>
+                <CardDescription className="mb-3 text-base">{stack.description}</CardDescription>
+                
+                <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-3">
+                  <div className="flex items-center space-x-1">
+                    <Clock className="h-4 w-4" />
+                    <span>Setup: {stack.estimatedSetupTime}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Lightbulb className="h-4 w-4" />
+                    <span>{stack.useCase}</span>
+                  </div>
+                </div>
+
+                {stack.benefits && stack.benefits.length > 0 && (
+                  <div className="mb-4">
+                    <h5 className="text-sm font-medium mb-2">Key Benefits:</h5>
+                    <div className="flex flex-wrap gap-1">
+                      {stack.benefits.map((benefit, bIndex) => (
+                        <Badge key={bIndex} variant="secondary" className="text-xs">
+                          {benefit}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {stack.components.slice(0, 4).map((component, index) => {
-                  const Icon = getComponentIcon(component.type);
-                  return (
-                    <div key={index} className="flex items-center space-x-1">
-                      <Icon className="h-3 w-3" />
-                      <Badge className={getComponentColor(component.type)} variant="secondary">
-                        {component.name}
-                      </Badge>
-                      {component.featured && (
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      )}
-                    </div>
-                  );
-                })}
-                {stack.components.length > 4 && (
-                  <Badge variant="outline">
-                    +{stack.components.length - 4} more
-                  </Badge>
-                )}
+              <div>
+                <h4 className="font-medium mb-3 flex items-center space-x-2">
+                  <span>Stack Components ({stack.components.length})</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {stack.components.map((component, cIndex) => {
+                    const Icon = getComponentIcon(component.type);
+                    return (
+                      <div key={cIndex} className="p-3 border rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                        <div className="flex items-start space-x-2">
+                          <Icon className="h-4 w-4 mt-1 text-primary flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <h6 className="font-medium text-sm truncate">{component.name}</h6>
+                              <Badge className={getComponentColor(component.type)} variant="secondary">
+                                {component.type}
+                              </Badge>
+                              {component.featured && (
+                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 flex-shrink-0" />
+                              )}
+                            </div>
+                            
+                            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                              {component.description}
+                            </p>
+                            
+                            <p className="text-xs text-primary mb-2 line-clamp-2">
+                              💡 {component.reason}
+                            </p>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                {component.source && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {component.source}
+                                  </Badge>
+                                )}
+                                {component.pricing && (
+                                  <span className="text-xs flex items-center space-x-1">
+                                    <span>{getPricingIcon(component.pricing)}</span>
+                                    <span>{component.pricing}</span>
+                                  </span>
+                                )}
+                              </div>
+                              {component.url && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-6 px-2 text-xs"
+                                  onClick={() => window.open(component.url, '_blank')}
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
               
-              <div className="flex items-center justify-between">
-                <div className="flex flex-wrap gap-1">
-                  {stack.tags.slice(0, 3).map((tag) => (
-                    <Badge key={tag} variant="outline" className="text-xs">
-                      #{tag}
-                    </Badge>
-                  ))}
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <Bot className="h-4 w-4" />
+                  <span>AI-generated stack • Just now</span>
                 </div>
                 <div className="flex space-x-2">
                   <Button variant="outline" size="sm">
                     View Details
                   </Button>
                   <Button size="sm">
-                    Use Stack
+                    Use This Stack
                   </Button>
                 </div>
               </div>

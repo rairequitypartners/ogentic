@@ -13,6 +13,29 @@ interface DiscoveryRequest {
   query: string;
   userPreferences?: any;
   context?: 'stacks' | 'tools' | 'recommendations';
+  generateStacks?: boolean;
+}
+
+interface StackComponent {
+  type: 'prompt' | 'tool' | 'model' | 'agent';
+  name: string;
+  description: string;
+  reason: string;
+  source?: string;
+  featured?: boolean;
+  url?: string;
+  pricing?: string;
+}
+
+interface GeneratedStack {
+  title: string;
+  description: string;
+  components: StackComponent[];
+  useCase: string;
+  industry: string;
+  complexity: string;
+  estimatedSetupTime: string;
+  benefits: string[];
 }
 
 interface ParsedQuery {
@@ -25,6 +48,7 @@ interface ParsedQuery {
   };
   keywords: string[];
   suggestions: string[];
+  generatedStacks?: GeneratedStack[];
 }
 
 serve(async (req) => {
@@ -33,41 +57,72 @@ serve(async (req) => {
   }
 
   try {
-    const { query, userPreferences, context = 'stacks' }: DiscoveryRequest = await req.json();
+    const { query, userPreferences, context = 'stacks', generateStacks = true }: DiscoveryRequest = await req.json();
 
-    console.log('Processing discovery query:', { query, context, userPreferences });
+    console.log('Processing discovery query:', { query, context, userPreferences, generateStacks });
 
-    const systemPrompt = `You are an AI assistant specialized in analyzing user queries for AI tool discovery. Your job is to parse natural language queries and extract:
+    const systemPrompt = `You are an AI assistant specialized in analyzing user queries for AI tool discovery and generating comprehensive AI stacks. 
 
-1. User intent and goals
-2. Relevant filters for AI tools/stacks
-3. Keywords for search
-4. Suggestions for better results
+Your tasks:
+1. Parse natural language queries and extract structured information
+2. Generate detailed AI stacks with 6-10 components that solve the user's specific needs
+3. Use real-world knowledge of AI tools, platforms, and services
 
 Available filter categories:
 - Types: prompt, tool, model, agent
-- Sources: openai, anthropic, google, microsoft, huggingface, custom, community
+- Sources: openai, anthropic, google, microsoft, huggingface, custom, community, zapier, make, notion, airtable, slack, discord, telegram
 - Complexity: beginner, intermediate, advanced, expert
-- Industries: healthcare, finance, education, ecommerce, marketing, technology, legal, manufacturing
+- Industries: healthcare, finance, education, ecommerce, marketing, technology, legal, manufacturing, retail, consulting
+
+For stack generation, create comprehensive solutions with:
+- Core AI models (GPT-4, Claude, Gemini, etc.)
+- Integration tools (Zapier, Make.com, APIs)
+- Data storage solutions (Airtable, Notion, databases)
+- Communication tools (Slack, Discord, email)
+- Specialized AI tools for the specific use case
+- Monitoring and analytics tools
 
 Response format (JSON only):
 {
   "intent": "Brief description of what the user wants to achieve",
   "filters": {
     "types": ["relevant types"],
-    "sources": ["relevant sources"],
+    "sources": ["relevant sources"], 
     "complexity": ["appropriate complexity level"],
     "industries": ["relevant industries"]
   },
   "keywords": ["important search terms"],
-  "suggestions": ["3-4 suggested refinements or related queries"]
+  "suggestions": ["3-4 suggested refinements or related queries"],
+  "generatedStacks": [
+    {
+      "title": "Stack name",
+      "description": "What this stack accomplishes",
+      "components": [
+        {
+          "type": "model|tool|agent|prompt",
+          "name": "Component name",
+          "description": "What this component does",
+          "reason": "Why this is essential for solving the user's problem",
+          "source": "openai|anthropic|etc",
+          "featured": true/false,
+          "url": "https://example.com (if applicable)",
+          "pricing": "free|paid|freemium"
+        }
+      ],
+      "useCase": "Specific use case this stack addresses",
+      "industry": "Primary industry",
+      "complexity": "beginner|intermediate|advanced|expert",
+      "estimatedSetupTime": "Time estimate",
+      "benefits": ["benefit1", "benefit2", "benefit3"]
+    }
+  ]
 }`;
 
     const userPrompt = `Query: "${query}"
 ${userPreferences ? `User preferences: ${JSON.stringify(userPreferences)}` : ''}
 Context: Looking for ${context}
 
-Parse this query and provide structured output.`;
+Generate 2-3 comprehensive AI stacks with 6-10 components each that directly solve the user's specific needs. Include real AI tools, models, and platforms. Focus on practical, actionable solutions.`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -78,7 +133,7 @@ Parse this query and provide structured output.`;
       },
       body: JSON.stringify({
         model: 'claude-3-5-haiku-20241022',
-        max_tokens: 1000,
+        max_tokens: 4000,
         messages: [
           { role: 'user', content: `${systemPrompt}\n\n${userPrompt}` }
         ],
@@ -105,7 +160,8 @@ Parse this query and provide structured output.`;
         intent: "Find AI tools and stacks",
         filters: { types: [], sources: [], complexity: [], industries: [] },
         keywords: query.split(' ').filter(word => word.length > 2),
-        suggestions: ["Try being more specific about your use case", "Mention your industry or complexity preference"]
+        suggestions: ["Try being more specific about your use case", "Mention your industry or complexity preference"],
+        generatedStacks: []
       };
     }
 
@@ -131,7 +187,8 @@ Parse this query and provide structured output.`;
         intent: "Find AI tools and stacks",
         filters: { types: [], sources: [], complexity: [], industries: [] },
         keywords: [],
-        suggestions: ["Try a simpler query", "Be more specific about your needs"]
+        suggestions: ["Try a simpler query", "Be more specific about your needs"],
+        generatedStacks: []
       }
     }), {
       status: 500,
