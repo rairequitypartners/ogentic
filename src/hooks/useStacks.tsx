@@ -44,7 +44,7 @@ export const useStacks = () => {
           title: stackData.title,
           description: stackData.description,
           query: query,
-          components: stackData.components,
+          components: stackData.components as any,
           is_public: false
         })
         .select()
