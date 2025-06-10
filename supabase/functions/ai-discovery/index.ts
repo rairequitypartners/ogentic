@@ -107,9 +107,14 @@ Your tasks:
 
 Available categories:
 - Types: prompt, tool, model, agent
-- Sources: openai, anthropic, google, microsoft, huggingface, custom, community, zapier, make, notion, airtable
+- Sources: openai, anthropic, google, microsoft, huggingface, custom, community, zapier, make, notion, airtable, zoom, googlemeet, teams
 - Complexity: beginner, intermediate, advanced
 - Industries: healthcare, finance, education, ecommerce, marketing, technology, legal
+
+Popular video conferencing tools to include when relevant:
+- Zoom: For video meetings, webinars, and collaboration
+- Google Meet: For Google Workspace integration and video calls
+- Microsoft Teams: For Microsoft 365 integration and team collaboration
 
 Response format (JSON only):
 {
@@ -151,7 +156,7 @@ Response format (JSON only):
 ${userPreferences ? `User preferences: Industry=${userPreferences.industry || 'technology'}, Complexity=${userPreferences.ux_complexity || 'intermediate'}` : ''}
 Context: ${context}
 
-Generate ${context === 'tools' ? 'individual tools' : 'complete stacks'} for this need. Focus on practical, popular solutions.`;
+Generate ${context === 'tools' ? 'individual tools' : 'complete stacks'} for this need. Focus on practical, popular solutions. When relevant to video conferencing, collaboration, or meetings, include tools like Zoom, Google Meet, or Microsoft Teams.`;
 
     // Use Claude 3.5 Haiku for faster, cheaper responses
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -191,7 +196,7 @@ Generate ${context === 'tools' ? 'individual tools' : 'complete stacks'} for thi
         intent: `Find AI ${context} related to: ${query}`,
         filters: { 
           types: context === 'tools' ? ['tool', 'model'] : ['tool', 'model', 'prompt'], 
-          sources: ['openai', 'google', 'anthropic'], 
+          sources: ['openai', 'google', 'anthropic', 'zoom', 'googlemeet', 'teams'], 
           complexity: [userPreferences?.ux_complexity || 'intermediate'], 
           industries: [userPreferences?.industry || 'technology'] 
         },
