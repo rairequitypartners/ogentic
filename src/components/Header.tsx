@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Sparkles, User, LogOut, Folder, Plus } from "lucide-react";
+import { Sparkles, User, LogOut, Folder, Plus, Settings } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 interface HeaderProps {
@@ -46,19 +47,9 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
         </button>
         
         <nav className="hidden md:flex items-center space-x-8">
-          {!user && (
-            <Link to="/" className="text-foreground hover:text-primary transition-colors">
-              Home
-            </Link>
-          )}
           <Link to="/discovery" className="text-foreground hover:text-primary transition-colors">
             Discovery
           </Link>
-          {user && (
-            <Link to="/settings" className="text-foreground hover:text-primary transition-colors">
-              Settings
-            </Link>
-          )}
         </nav>
         
         <div className="flex items-center space-x-4">
@@ -109,6 +100,10 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
                   >
                     <Folder className="mr-2 h-4 w-4" />
                     <span>My Stacks</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/settings")}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
