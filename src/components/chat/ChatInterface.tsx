@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Filter, Menu, X } from 'lucide-react';
+import { Send, Filter, Menu, X, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChatMessage } from './ChatMessage';
 import { FiltersSidebar } from './FiltersSidebar';
 import { DeployModal } from './DeployModal';
 import { useMyStacks } from '@/hooks/useMyStacks';
+import { useAIDiscovery } from '@/hooks/useAIDiscovery';
+import { useSettings } from '@/contexts/SettingsContext';
 import { getStackRecommendation } from '@/utils/stackRecommendations';
 import { getFirstChatTurn, detectUserIntent } from '@/utils/firstChatTurns';
 
@@ -113,6 +115,8 @@ export const ChatInterface: React.FC = () => {
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { saveStack, deployStack } = useMyStacks();
+  const { clarifyingQuestionsEnabled } = useSettings();
+  const { parseQuery } = useAIDiscovery();
 
   // Initialize first chat turn when component mounts
   useEffect(() => {
@@ -138,7 +142,15 @@ export const ChatInterface: React.FC = () => {
       timestamp: new Date()
     };
 
-    const currentQuery = input; // Store the query for tool generation
+    let queryToProcess = input;
+    
+    // Append clarifying prompt if enabled
+    if (clarifyingQuestionsEnabled) {
+      queryToProcess += " Ask me clarifying question until you are 98% confident you can complete the task successfully.";
+      console.log('Clarifying questions enabled - appended prompt to query:', queryToProcess);
+    }
+
+    const currentQuery = input; // Store original query for tool generation
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
@@ -162,33 +174,67 @@ export const ChatInterface: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 800));
     }
 
-    // Simulate AI response with streaming
-    const streamingMessage: Message = {
-      id: `ai-${Date.now()}`,
-      type: 'assistant',
-      content: 'Great — here\'s a stack I recommend for that. This includes the best mix of tools and prompts used by top teams for this exact job...',
-      timestamp: new Date(),
-      streaming: true
-    };
+    try {
+      // Use AI discovery service with the modified query
+      const discoveryResult = await parseQuery(queryToProcess, {}, 'stacks');
+      console.log('AI Discovery result:', discoveryResult);
 
-    setMessages(prev => [...prev, streamingMessage]);
+      // Simulate streaming for better UX
+      const streamingMessage: Message = {
+        id: `ai-${Date.now()}`,
+        type: 'assistant',
+        content: 'Great — here\'s a stack I recommend for that. This includes the best mix of tools and prompts used by top teams for this exact job...',
+        timestamp: new Date(),
+        streaming: true
+      };
 
-    // Simulate streaming delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+      setMessages(prev => [...prev, streamingMessage]);
 
-    // Generate tools based on query with new dynamic reasons
-    const tools = generateMockTools(currentQuery);
-    
-    const finalMessage: Message = {
-      ...streamingMessage,
-      content: `Great — here's a stack I recommend for that. This includes the best mix of tools and prompts used by top teams for this exact job. You can deploy it as-is or customize it to fit your workflow.`,
-      tools,
-      streaming: false
-    };
+      // Simulate streaming delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-    setMessages(prev => prev.map(msg => 
-      msg.id === streamingMessage.id ? finalMessage : msg
-    ));
+      // Generate tools based on original query (not modified) for consistency
+      const tools = generateMockTools(currentQuery);
+      
+      const finalMessage: Message = {
+        ...streamingMessage,
+        content: `Great — here's a stack I recommend for that. This includes the best mix of tools and prompts used by top teams for this exact job. You can deploy it as-is or customize it to fit your workflow.`,
+        tools,
+        streaming: false
+      };
+
+      setMessages(prev => prev.map(msg => 
+        msg.id === streamingMessage.id ? finalMessage : msg
+      ));
+
+    } catch (error) {
+      console.error('Error in AI discovery:', error);
+      
+      // Fallback to original behavior if AI discovery fails
+      const streamingMessage: Message = {
+        id: `ai-${Date.now()}`,
+        type: 'assistant',
+        content: 'Great — here\'s a stack I recommend for that. This includes the best mix of tools and prompts used by top teams for this exact job...',
+        timestamp: new Date(),
+        streaming: true
+      };
+
+      setMessages(prev => [...prev, streamingMessage]);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const tools = generateMockTools(currentQuery);
+      
+      const finalMessage: Message = {
+        ...streamingMessage,
+        content: `Great — here's a stack I recommend for that. This includes the best mix of tools and prompts used by top teams for this exact job. You can deploy it as-is or customize it to fit your workflow.`,
+        tools,
+        streaming: false
+      };
+
+      setMessages(prev => prev.map(msg => 
+        msg.id === streamingMessage.id ? finalMessage : msg
+      ));
+    }
 
     setIsLoading(false);
   };
@@ -242,15 +288,17 @@ export const ChatInterface: React.FC = () => {
             </div>
           </div>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="hidden lg:flex items-center space-x-2"
-          >
-            <Filter className="h-4 w-4" />
-            <span>Filters</span>
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="hidden lg:flex items-center space-x-2"
+            >
+              <Filter className="h-4 w-4" />
+              <span>Filters</span>
+            </Button>
+          </div>
         </div>
 
         {/* Messages */}
@@ -325,6 +373,11 @@ export const ChatInterface: React.FC = () => {
               </Button>
             </div>
           </div>
+          {clarifyingQuestionsEnabled && (
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              Clarifying questions enabled - AI will ask for details to better understand your needs
+            </p>
+          )}
         </div>
       </div>
 

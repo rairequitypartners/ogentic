@@ -38,7 +38,7 @@ interface ParsedQuery {
 }
 
 interface UseAIDiscoveryResult {
-  parseQuery: (query: string, userPreferences?: any, context?: string) => Promise<ParsedQuery>;
+  parseQuery: (query: string, userPreferences?: any, context?: string, clarifyingEnabled?: boolean) => Promise<ParsedQuery>;
   loading: boolean;
   error: string | null;
 }
@@ -50,10 +50,18 @@ export const useAIDiscovery = (): UseAIDiscoveryResult => {
   const parseQuery = async (
     query: string, 
     userPreferences?: any, 
-    context: string = 'stacks'
+    context: string = 'stacks',
+    clarifyingEnabled: boolean = false
   ): Promise<ParsedQuery> => {
     setLoading(true);
     setError(null);
+
+    console.log('AI Discovery called with:', { 
+      query, 
+      userPreferences, 
+      context, 
+      clarifyingEnabled 
+    });
 
     try {
       const { data, error: functionError } = await supabase.functions.invoke('ai-discovery', {
@@ -61,7 +69,8 @@ export const useAIDiscovery = (): UseAIDiscoveryResult => {
           query, 
           userPreferences, 
           context,
-          generateStacks: true
+          generateStacks: true,
+          clarifyingEnabled
         }
       });
 
@@ -75,6 +84,7 @@ export const useAIDiscovery = (): UseAIDiscoveryResult => {
         return data.fallback;
       }
 
+      console.log('AI Discovery successful response:', data);
       return data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to parse query';
