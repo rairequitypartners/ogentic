@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,6 +12,23 @@ const Index = () => {
   const navigate = useNavigate();
   const [showChat, setShowChat] = useState(false);
   const [chatKey, setChatKey] = useState(0); // Key to force chat reset
+  const [currentExampleIndex, setCurrentExampleIndex] = useState(0);
+
+  const examples = [
+    "Automate personalized outbound emails for my SaaS",
+    "Speed up QA process for my engineering team", 
+    "Summarize customer support tickets weekly",
+    "Auto-generate blog posts from product updates"
+  ];
+
+  // Auto-rotate examples every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentExampleIndex((prev) => (prev + 1) % examples.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [examples.length]);
 
   // Check URL params to determine if we should show chat immediately
   useEffect(() => {
@@ -172,28 +188,39 @@ const Index = () => {
                 Get started with proven AI stacks that deliver results
               </p>
               
-              <div className="grid gap-4 max-w-3xl mx-auto">
-                {[
-                  "Automate personalized outbound emails for my SaaS",
-                  "Speed up QA process for my engineering team", 
-                  "Summarize customer support tickets weekly",
-                  "Draft onboarding emails for new users",
-                  "Auto-generate blog posts from product updates"
-                ].map((example, index) => (
+              <div className="max-w-3xl mx-auto">
+                <AnimatePresence mode="wait">
                   <motion.button
-                    key={example}
+                    key={currentExampleIndex}
                     onClick={handleStartFresh}
-                    className="w-full p-4 text-left rounded-2xl bg-muted/50 hover:bg-muted transition-all duration-200 border border-border/30 hover:border-border/50 group"
+                    className="w-full p-6 text-left rounded-2xl bg-muted/50 hover:bg-muted transition-all duration-200 border border-border/30 hover:border-border/50 group"
                     whileHover={{ scale: 1.02 }}
                     initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 + index * 0.1 }}
-                    viewport={{ once: true }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
                   >
-                    <span className="text-foreground font-medium">{example}</span>
-                    <ChevronRight className="h-4 w-4 float-right mt-0.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <span className="text-foreground font-medium text-lg">
+                      {examples[currentExampleIndex]}
+                    </span>
+                    <ChevronRight className="h-5 w-5 float-right mt-0.5 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </motion.button>
-                ))}
+                </AnimatePresence>
+                
+                {/* Progress indicators */}
+                <div className="flex justify-center mt-6 space-x-2">
+                  {examples.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentExampleIndex(index)}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        index === currentExampleIndex 
+                          ? 'bg-primary w-8' 
+                          : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
             </motion.div>
           </div>
