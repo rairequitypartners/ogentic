@@ -29,7 +29,6 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
     if (onStartFresh) {
       onStartFresh();
     } else {
-      // Navigate to fresh chat by adding URL param
       navigate("/?fresh=true");
     }
   };
@@ -54,9 +53,6 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
           <Link to="/discovery" className="text-foreground hover:text-primary transition-colors">
             Discovery
           </Link>
-          <Link to="/marketplace" className="text-foreground hover:text-primary transition-colors">
-            Marketplace
-          </Link>
           {user && (
             <>
               <Link to="/my-stacks" className="text-foreground hover:text-primary transition-colors">
@@ -70,7 +66,6 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
         </nav>
         
         <div className="flex items-center space-x-4">
-          {/* New Stack Button */}
           <Button 
             onClick={handleNewStack}
             variant="outline" 

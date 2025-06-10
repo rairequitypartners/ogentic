@@ -10,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StackDeployment } from "@/components/StackDeployment";
 import { Header } from "@/components/Header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { 
   Folder, 
@@ -55,6 +56,7 @@ export default function MyStacks() {
   const [loading, setLoading] = useState(true);
   const [expandedStack, setExpandedStack] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("my-stacks");
+  const [sortBy, setSortBy] = useState("recent");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -128,9 +130,26 @@ export default function MyStacks() {
     navigate("/?fresh=true");
   };
 
+  const getSortedStacks = (stacksToSort: AIStack[]) => {
+    switch (sortBy) {
+      case 'recent':
+        return [...stacksToSort].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      case 'oldest':
+        return [...stacksToSort].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      case 'alphabetical':
+        return [...stacksToSort].sort((a, b) => a.title.localeCompare(b.title));
+      case 'components':
+        return [...stacksToSort].sort((a, b) => getComponentCount(b.components) - getComponentCount(a.components));
+      default:
+        return stacksToSort;
+    }
+  };
+
   if (authLoading || !user) {
     return <div className="min-h-screen bg-background" />;
   }
+
+  const sortedStacks = getSortedStacks(stacks);
 
   return (
     <div className="min-h-screen bg-background">
@@ -212,7 +231,24 @@ export default function MyStacks() {
               </div>
             ) : (
               <div className="space-y-6">
-                {stacks.map((stack) => (
+                <div className="flex justify-between items-center">
+                  <div className="text-sm text-muted-foreground">
+                    {stacks.length} stack{stacks.length !== 1 ? 's' : ''} total
+                  </div>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="recent">Most Recent</SelectItem>
+                      <SelectItem value="oldest">Oldest First</SelectItem>
+                      <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                      <SelectItem value="components">Most Components</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {sortedStacks.map((stack) => (
                   <Card key={stack.id} className="hover:shadow-lg transition-shadow">
                     <CardHeader>
                       <div className="flex justify-between items-start">

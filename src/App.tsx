@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -13,7 +14,6 @@ import Onboarding from "./pages/Onboarding";
 import Discovery from "./pages/Discovery";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
-import Marketplace from "./pages/Marketplace";
 
 const queryClient = new QueryClient();
 
@@ -31,7 +31,6 @@ const App: React.FC = () => {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/discovery" element={<Discovery />} />
-                <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/my-stacks" element={<MyStacks />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
