@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Filter, Menu, X } from 'lucide-react';
@@ -8,6 +7,7 @@ import { ChatMessage } from './ChatMessage';
 import { FiltersSidebar } from './FiltersSidebar';
 import { DeployModal } from './DeployModal';
 import { useMyStacks } from '@/hooks/useMyStacks';
+import { getStackRecommendation } from '@/utils/stackRecommendations';
 
 interface Tool {
   id: string;
@@ -38,7 +38,7 @@ interface FilterState {
   industries: string[];
 }
 
-// Enhanced mock data with reasons and setup times
+// Enhanced mock data with dynamic reasons based on query
 const generateMockTools = (query: string): Tool[] => {
   const tools: Tool[] = [
     {
@@ -50,7 +50,7 @@ const generateMockTools = (query: string): Tool[] => {
       type: 'model',
       url: 'https://chat.openai.com',
       featured: true,
-      reason: 'Integrates with your existing tools, is proven for content automation, and will save you hours weekly',
+      reason: getStackRecommendation(query, 0),
       setupTime: '5 min'
     },
     {
@@ -62,7 +62,7 @@ const generateMockTools = (query: string): Tool[] => {
       type: 'model',
       url: 'https://claude.ai',
       featured: true,
-      reason: 'Integrates with your workflow, is proven for analytical tasks, and will save you hours on documentation',
+      reason: getStackRecommendation(query, 1),
       setupTime: '3 min'
     },
     {
@@ -73,7 +73,7 @@ const generateMockTools = (query: string): Tool[] => {
       source: 'Zapier',
       type: 'tool',
       url: 'https://zapier.com',
-      reason: 'Integrates with 5000+ apps in your stack, is proven for automation, and will save you hours on manual tasks',
+      reason: getStackRecommendation(query, 2),
       setupTime: '10 min'
     },
     {
@@ -84,7 +84,7 @@ const generateMockTools = (query: string): Tool[] => {
       source: 'Custom',
       type: 'agent',
       featured: true,
-      reason: 'Integrates with your CRM, is proven for lead generation, and will save you hours on qualification',
+      reason: getStackRecommendation(query, 3),
       setupTime: '15 min'
     }
   ];
@@ -130,6 +130,7 @@ export const ChatInterface: React.FC = () => {
       timestamp: new Date()
     };
 
+    const currentQuery = input; // Store the query for tool generation
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
@@ -148,8 +149,8 @@ export const ChatInterface: React.FC = () => {
     // Simulate streaming delay
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // Generate tools based on query
-    const tools = generateMockTools(input);
+    // Generate tools based on query with new dynamic reasons
+    const tools = generateMockTools(currentQuery);
     
     const finalMessage: Message = {
       ...streamingMessage,
