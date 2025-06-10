@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -81,7 +82,7 @@ const Index = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              Meet OgenticAI
+              Your AI Agent. Your Stack. Your Results.
             </motion.h1>
             <motion.p 
               className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto"
@@ -89,7 +90,7 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
-              Your AI-powered discovery assistant. Chat naturally to find the perfect tools, prompts, models, and agents for any task.
+              Stop wasting time stitching together tools and prompts. Ogentic AI helps you find, deploy, and manage the perfect AI stack — tuned to your exact workflow — in minutes.
             </motion.p>
           </motion.div>
           
@@ -104,10 +105,10 @@ const Index = () => {
               className="text-lg px-8 py-6 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-300 transform hover:scale-105"
             >
               <MessageCircle className="h-5 w-5 mr-2" />
-              Start Chatting
+              Start Building Your Stack
             </Button>
             <p className="text-sm text-muted-foreground mt-3">
-              No signup required • Instant results • Powered by AI
+              No signup required • Deploy in minutes • Driven by outcomes
             </p>
           </motion.div>
           
@@ -123,9 +124,9 @@ const Index = () => {
               transition={{ type: "spring", stiffness: 300 }}
             >
               <Sparkles className="h-8 w-8 text-primary mb-4 mx-auto" />
-              <h3 className="font-semibold mb-2">Conversational Discovery</h3>
+              <h3 className="font-semibold mb-2">Save Time</h3>
               <p className="text-sm text-muted-foreground">
-                Simply describe what you need in natural language. Our AI understands context and finds exactly what you're looking for.
+                Stop researching and testing tools. Get a complete AI stack deployed to your workflow in minutes, not weeks.
               </p>
             </motion.div>
             
@@ -135,9 +136,9 @@ const Index = () => {
               transition={{ type: "spring", stiffness: 300 }}
             >
               <Zap className="h-8 w-8 text-primary mb-4 mx-auto" />
-              <h3 className="font-semibold mb-2">Real-Time Results</h3>
+              <h3 className="font-semibold mb-2">Drive Revenue</h3>
               <p className="text-sm text-muted-foreground">
-                Get live, streaming responses with the latest AI tools and prompts. See results appear as our AI searches and analyzes.
+                Focus on results that matter. Every stack is tuned for specific outcomes — more leads, faster QA, better content.
               </p>
             </motion.div>
             
@@ -147,9 +148,9 @@ const Index = () => {
               transition={{ type: "spring", stiffness: 300 }}
             >
               <Target className="h-8 w-8 text-primary mb-4 mx-auto" />
-              <h3 className="font-semibold mb-2">Lifecycle Guidance</h3>
+              <h3 className="font-semibold mb-2">Ship Faster</h3>
               <p className="text-sm text-muted-foreground">
-                Not just discovery - get setup guides, optimization tips, and implementation support for every tool.
+                Deploy complete workflows, not individual tools. Integrate with your existing stack and start seeing results immediately.
               </p>
             </motion.div>
           </motion.div>
@@ -161,19 +162,20 @@ const Index = () => {
             transition={{ delay: 1.2 }}
           >
             <p className="text-sm text-muted-foreground mb-4">
-              Try these example queries:
+              Try these popular workflows:
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               {[
-                "Find AI tools for content creation",
-                "Best prompts for coding assistance", 
-                "Customer support automation agents",
-                "Data analysis models"
+                "Automate personalized outbound emails for my SaaS",
+                "Speed up QA process for my engineering team", 
+                "Summarize customer support tickets weekly",
+                "Draft onboarding emails for new users",
+                "Auto-generate blog posts from product updates"
               ].map((example, index) => (
                 <motion.button
                   key={example}
                   onClick={() => setShowChat(true)}
-                  className="text-xs px-3 py-1 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                  className="text-xs px-3 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors text-left"
                   whileHover={{ scale: 1.05 }}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}

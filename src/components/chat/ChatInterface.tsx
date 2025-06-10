@@ -50,7 +50,7 @@ const generateMockTools = (query: string): Tool[] => {
       type: 'model',
       url: 'https://chat.openai.com',
       featured: true,
-      reason: 'Used by top teams for customer support, integrates seamlessly with existing workflows, has 90% adoption rate in your industry',
+      reason: 'Integrates with your existing tools, is proven for content automation, and will save you hours weekly',
       setupTime: '5 min'
     },
     {
@@ -62,7 +62,7 @@ const generateMockTools = (query: string): Tool[] => {
       type: 'model',
       url: 'https://claude.ai',
       featured: true,
-      reason: 'Recommended for analytical tasks due to superior reasoning capabilities and safety features preferred by enterprise teams',
+      reason: 'Integrates with your workflow, is proven for analytical tasks, and will save you hours on documentation',
       setupTime: '3 min'
     },
     {
@@ -73,7 +73,7 @@ const generateMockTools = (query: string): Tool[] => {
       source: 'Zapier',
       type: 'tool',
       url: 'https://zapier.com',
-      reason: 'Integrates with 5000+ apps in your existing stack, reduces manual work by 80% according to similar teams',
+      reason: 'Integrates with 5000+ apps in your stack, is proven for automation, and will save you hours on manual tasks',
       setupTime: '10 min'
     },
     {
@@ -84,7 +84,7 @@ const generateMockTools = (query: string): Tool[] => {
       source: 'Custom',
       type: 'agent',
       featured: true,
-      reason: 'Built specifically for your use case, proven to increase lead conversion by 40% in similar implementations',
+      reason: 'Integrates with your CRM, is proven for lead generation, and will save you hours on qualification',
       setupTime: '15 min'
     }
   ];
@@ -138,7 +138,7 @@ export const ChatInterface: React.FC = () => {
     const streamingMessage: Message = {
       id: `ai-${Date.now()}`,
       type: 'assistant',
-      content: 'Hey! I found some excellent tools for you...',
+      content: 'Great — here\'s a stack I recommend for that. This includes the best mix of tools and prompts used by top teams for this exact job...',
       timestamp: new Date(),
       streaming: true
     };
@@ -153,7 +153,7 @@ export const ChatInterface: React.FC = () => {
     
     const finalMessage: Message = {
       ...streamingMessage,
-      content: `Hey! I found ${tools.length} excellent tools for "${input}". Each of these has been carefully selected based on your needs and industry best practices.`,
+      content: `Great — here's a stack I recommend for that. This includes the best mix of tools and prompts used by top teams for this exact job. You can deploy it as-is or customize it to fit your workflow.`,
       tools,
       streaming: false
     };
@@ -210,7 +210,7 @@ export const ChatInterface: React.FC = () => {
             </Button>
             <div>
               <h1 className="font-semibold text-lg">OgenticAI</h1>
-              <p className="text-sm text-muted-foreground">Your AI-powered discovery assistant</p>
+              <p className="text-sm text-muted-foreground">Your AI agent for building perfect stacks</p>
             </div>
           </div>
           
@@ -235,18 +235,19 @@ export const ChatInterface: React.FC = () => {
                 className="text-center py-12"
               >
                 <h2 className="text-2xl font-bold mb-4 text-gradient">
-                  Welcome to OgenticAI
+                  Hey! I can help you build the perfect AI stack
                 </h2>
                 <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-                  Discover the perfect AI tools, prompts, models, and agents for any task. 
-                  Just tell me what you're looking for in natural language.
+                  I can help you build a stack of AI tools, models, prompts, and agents that will actually drive results — not just look good in a list.
+                  <br /><br />
+                  What are you working on today? Describe the task or outcome you want — I'll find the best stack to make it happen.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
                   {[
-                    "Find AI tools for content creation",
-                    "Best prompts for coding assistance", 
-                    "Customer support automation agents",
-                    "Data analysis models"
+                    "Automate personalized outbound emails for my SaaS",
+                    "Speed up QA process for my engineering team", 
+                    "Summarize customer support tickets weekly",
+                    "Draft onboarding emails for new users"
                   ].map((example, index) => (
                     <motion.button
                       key={example}
@@ -284,7 +285,7 @@ export const ChatInterface: React.FC = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask me about AI tools..."
+                placeholder="Ask me about AI tools or stacks for your next project..."
                 className="pr-12 rounded-xl"
                 disabled={isLoading}
               />

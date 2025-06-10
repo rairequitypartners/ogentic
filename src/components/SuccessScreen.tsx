@@ -26,6 +26,7 @@ export const SuccessScreen = ({ deployments, onExploreMore, onRefineStack }: Suc
   }, []);
 
   const successCount = deployments.filter(d => d.status === 'success').length;
+  const platforms = deployments.filter(d => d.status === 'success').map(d => d.platform).join(', ');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-success/10 via-background to-primary/10 flex items-center justify-center p-4">
@@ -44,10 +45,10 @@ export const SuccessScreen = ({ deployments, onExploreMore, onRefineStack }: Suc
             <CheckCircle className="h-12 w-12 text-success" />
           </div>
           <CardTitle className="text-3xl text-gradient mb-2">
-            Stack Deployed Successfully! 
+            Your AI Stack is Live! 🚀
           </CardTitle>
           <p className="text-lg text-muted-foreground">
-            Your AI stack has been deployed to {successCount} platform{successCount !== 1 ? 's' : ''}
+            We've deployed your stack to {platforms}. You can start using it right away — and come back anytime to refine it.
           </p>
         </CardHeader>
         
@@ -83,7 +84,7 @@ export const SuccessScreen = ({ deployments, onExploreMore, onRefineStack }: Suc
               <Sparkles className="h-5 w-5 mr-2 text-primary" />
               What's next?
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Button 
                 onClick={onExploreMore}
                 className="flex items-center justify-center space-x-2 py-6"
@@ -95,8 +96,15 @@ export const SuccessScreen = ({ deployments, onExploreMore, onRefineStack }: Suc
               <Button 
                 onClick={onRefineStack}
                 className="flex items-center justify-center space-x-2 py-6"
+                variant="outline"
               >
-                <span>Refine This Stack</span>
+                <span>Optimize This Stack</span>
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button 
+                className="flex items-center justify-center space-x-2 py-6"
+              >
+                <span>Save and Track My Stack</span>
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
