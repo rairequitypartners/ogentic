@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Send, Sparkles, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -229,22 +228,21 @@ export const ChatInterface = () => {
               </p>
               
               <div className="max-w-3xl mx-auto">
-                <div className="relative h-20 mb-6 flex items-center justify-center overflow-hidden">
+                <div className="relative h-16 mb-6 flex items-center justify-center overflow-hidden">
                   <AnimatePresence mode="wait">
                     <motion.button
                       key={currentExampleIndex}
                       onClick={() => setInput(suggestedQueries[currentExampleIndex])}
-                      className="absolute w-full p-6 text-left rounded-2xl bg-muted/50 hover:bg-muted transition-all duration-200 border border-border/30 hover:border-border/50 group"
+                      className="absolute w-full text-center group"
                       whileHover={{ scale: 1.02 }}
                       initial={{ opacity: 0, x: 50 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -50 }}
                       transition={{ duration: 0.4, ease: "easeInOut" }}
                     >
-                      <span className="text-foreground font-medium text-lg block pr-8">
+                      <span className="text-foreground font-medium text-xl hover:text-primary transition-colors">
                         {suggestedQueries[currentExampleIndex]}
                       </span>
-                      <ChevronRight className="h-5 w-5 absolute right-6 top-1/2 transform -translate-y-1/2 text-muted-foreground group-hover:text-foreground transition-colors" />
                     </motion.button>
                   </AnimatePresence>
                 </div>
