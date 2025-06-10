@@ -1,4 +1,3 @@
-
 import { useState, useEffect, lazy, Suspense } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
@@ -138,8 +137,6 @@ export default function MyStacks() {
         return [...stacksToSort].sort((a, b) => a.title.localeCompare(b.title));
       case 'components':
         return [...stacksToSort].sort((a, b) => getComponentCount(b.components) - getComponentCount(a.components));
-      case 'ratings':
-        return [...stacksToSort].sort((a, b) => (b.rating || 0) - (a.rating || 0));
       default:
         return stacksToSort;
     }
@@ -235,7 +232,6 @@ export default function MyStacks() {
                       <SelectItem value="oldest">Oldest First</SelectItem>
                       <SelectItem value="alphabetical">Alphabetical</SelectItem>
                       <SelectItem value="components">Most Components</SelectItem>
-                      <SelectItem value="ratings">Highest Rated</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
