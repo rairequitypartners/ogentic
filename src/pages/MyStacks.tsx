@@ -1,3 +1,4 @@
+
 import { useState, useEffect, lazy, Suspense } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
@@ -9,7 +10,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StackDeployment } from "@/components/StackDeployment";
 import { Header } from "@/components/Header";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -55,7 +55,6 @@ export default function MyStacks() {
   const [stacks, setStacks] = useState<AIStack[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedStack, setExpandedStack] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("my-stacks");
   const [sortBy, setSortBy] = useState("recent");
   const navigate = useNavigate();
 
@@ -126,7 +125,6 @@ export default function MyStacks() {
   };
 
   const handleStartFresh = () => {
-    // Navigate to the fresh Google-like chat interface
     navigate("/?fresh=true");
   };
 
@@ -140,6 +138,8 @@ export default function MyStacks() {
         return [...stacksToSort].sort((a, b) => a.title.localeCompare(b.title));
       case 'components':
         return [...stacksToSort].sort((a, b) => getComponentCount(b.components) - getComponentCount(a.components));
+      case 'ratings':
+        return [...stacksToSort].sort((a, b) => (b.rating || 0) - (a.rating || 0));
       default:
         return stacksToSort;
     }
@@ -187,23 +187,14 @@ export default function MyStacks() {
           </Alert>
         )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="my-stacks" className="flex items-center gap-2">
-              <Folder className="h-4 w-4" />
+        <div className="space-y-8">
+          {/* My Saved Stacks Section */}
+          <div>
+            <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+              <Folder className="h-6 w-6" />
               My Saved Stacks
-            </TabsTrigger>
-            <TabsTrigger value="complete-stacks" className="flex items-center gap-2">
-              <Layers className="h-4 w-4" />
-              Complete Stacks
-            </TabsTrigger>
-            <TabsTrigger value="recommended" className="flex items-center gap-2">
-              <Star className="h-4 w-4" />
-              AI Recommended
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="my-stacks">
+            </h2>
+            
             {loading ? (
               <div className="grid grid-cols-1 gap-6">
                 {[...Array(3)].map((_, i) => (
@@ -244,6 +235,7 @@ export default function MyStacks() {
                       <SelectItem value="oldest">Oldest First</SelectItem>
                       <SelectItem value="alphabetical">Alphabetical</SelectItem>
                       <SelectItem value="components">Most Components</SelectItem>
+                      <SelectItem value="ratings">Highest Rated</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -336,9 +328,14 @@ export default function MyStacks() {
                 ))}
               </div>
             )}
-          </TabsContent>
+          </div>
 
-          <TabsContent value="complete-stacks">
+          {/* Complete Stacks Section */}
+          <div>
+            <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+              <Layers className="h-6 w-6" />
+              Complete Stacks
+            </h2>
             <Suspense fallback={<StacksLoadingFallback />}>
               <StackResults 
                 searchQuery=""
@@ -346,17 +343,22 @@ export default function MyStacks() {
                 userPreferences={preferences}
               />
             </Suspense>
-          </TabsContent>
+          </div>
 
-          <TabsContent value="recommended">
+          {/* AI Recommended Section */}
+          <div>
+            <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+              <Star className="h-6 w-6" />
+              AI Recommended
+            </h2>
             <Suspense fallback={<StacksLoadingFallback />}>
               <RecommendedStacks 
                 userPreferences={preferences}
                 searchQuery=""
               />
             </Suspense>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
     </div>
   );
