@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "./ChatMessage";
@@ -35,10 +35,27 @@ export const ChatInterface = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [deployFlowOpen, setDeployFlowOpen] = useState(false);
   const [selectedStack, setSelectedStack] = useState(null);
+  const [currentExampleIndex, setCurrentExampleIndex] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { clarifyingQuestionsEnabled } = useSettings();
 
   const hasMessages = messages.length > 0;
+
+  const suggestedQueries = [
+    "Automate personalized outbound emails for my SaaS",
+    "Speed up QA process for my engineering team", 
+    "Summarize customer support tickets weekly",
+    "Auto-generate blog posts from product updates"
+  ];
+
+  // Auto-rotate examples every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentExampleIndex((prev) => (prev + 1) % suggestedQueries.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [suggestedQueries.length]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -114,13 +131,6 @@ export const ChatInterface = () => {
   const handleDeployComplete = (destination: string) => {
     console.log('Stack deployed to:', destination);
   };
-
-  const suggestedQueries = [
-    "Automate personalized outbound emails for my SaaS",
-    "Speed up QA process for my engineering team", 
-    "Summarize customer support tickets weekly",
-    "Auto-generate blog posts from product updates"
-  ];
 
   if (!hasMessages) {
     return (
@@ -207,7 +217,7 @@ export const ChatInterface = () => {
               </Button>
             </motion.div>
 
-            {/* Suggested Queries */}
+            {/* Suggested Queries - Rotating Carousel */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -217,16 +227,42 @@ export const ChatInterface = () => {
               <p className="text-sm text-muted-foreground text-center mb-4">
                 Popular searches:
               </p>
-              <div className="grid gap-2">
-                {suggestedQueries.map((query, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setInput(query)}
-                    className="text-sm text-primary hover:underline text-center py-1 transition-colors"
-                  >
-                    {query}
-                  </button>
-                ))}
+              
+              <div className="max-w-3xl mx-auto">
+                <div className="relative h-20 mb-6 flex items-center justify-center overflow-hidden">
+                  <AnimatePresence mode="wait">
+                    <motion.button
+                      key={currentExampleIndex}
+                      onClick={() => setInput(suggestedQueries[currentExampleIndex])}
+                      className="absolute w-full p-6 text-left rounded-2xl bg-muted/50 hover:bg-muted transition-all duration-200 border border-border/30 hover:border-border/50 group"
+                      whileHover={{ scale: 1.02 }}
+                      initial={{ opacity: 0, x: 50 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -50 }}
+                      transition={{ duration: 0.4, ease: "easeInOut" }}
+                    >
+                      <span className="text-foreground font-medium text-lg block pr-8">
+                        {suggestedQueries[currentExampleIndex]}
+                      </span>
+                      <ChevronRight className="h-5 w-5 absolute right-6 top-1/2 transform -translate-y-1/2 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </motion.button>
+                  </AnimatePresence>
+                </div>
+                
+                {/* Progress indicators */}
+                <div className="flex justify-center space-x-2">
+                  {suggestedQueries.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentExampleIndex(index)}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        index === currentExampleIndex 
+                          ? 'bg-primary w-8' 
+                          : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
             </motion.div>
           </div>
