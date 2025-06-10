@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Sparkles, User, LogOut, Folder } from "lucide-react";
+import { Sparkles, User, LogOut, Folder, Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 export const Header = () => {
@@ -48,6 +49,14 @@ export const Header = () => {
         </nav>
         
         <div className="flex items-center space-x-4">
+          {/* New Stack Button */}
+          <Link to="/">
+            <Button variant="outline" size="sm" className="hidden sm:flex">
+              <Plus className="h-4 w-4 mr-2" />
+              New Stack
+            </Button>
+          </Link>
+
           {user ? (
             <>
               <Link to="/my-stacks">
@@ -71,6 +80,13 @@ export const Header = () => {
                   <DropdownMenuItem className="flex items-center">
                     <User className="mr-2 h-4 w-4" />
                     <span>{user.email}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="sm:hidden"
+                    onClick={() => navigate("/")}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    <span>New Stack</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     className="sm:hidden"

@@ -14,6 +14,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [showChat, setShowChat] = useState(false);
   const [showMyStacks, setShowMyStacks] = useState(false);
+  const [chatKey, setChatKey] = useState(0); // Key to force chat reset
 
   // Redirect to onboarding if user needs it
   useEffect(() => {
@@ -21,6 +22,13 @@ const Index = () => {
       navigate("/onboarding");
     }
   }, [user, needsOnboarding, authLoading, navigate]);
+
+  // Reset chat when returning to fresh state
+  const handleStartFresh = () => {
+    setChatKey(prev => prev + 1); // Force chat component to remount
+    setShowChat(true);
+    setShowMyStacks(false);
+  };
 
   if (showMyStacks) {
     return (
@@ -58,7 +66,7 @@ const Index = () => {
               My Stacks
             </Button>
           </div>
-          <ChatInterface />
+          <ChatInterface key={chatKey} />
         </div>
       </div>
     );
@@ -101,7 +109,7 @@ const Index = () => {
                 className="space-y-4"
               >
                 <Button 
-                  onClick={() => setShowChat(true)}
+                  onClick={handleStartFresh}
                   size="lg"
                   className="h-14 px-8 text-lg font-medium rounded-full bg-primary hover:bg-primary/90 transition-all duration-200"
                 >
@@ -198,7 +206,7 @@ const Index = () => {
                 ].map((example, index) => (
                   <motion.button
                     key={example}
-                    onClick={() => setShowChat(true)}
+                    onClick={handleStartFresh}
                     className="w-full p-4 text-left rounded-2xl bg-muted/50 hover:bg-muted transition-all duration-200 border border-border/30 hover:border-border/50 group"
                     whileHover={{ scale: 1.02 }}
                     initial={{ opacity: 0, y: 20 }}
@@ -231,7 +239,7 @@ const Index = () => {
               </h2>
               
               <Button 
-                onClick={() => setShowChat(true)}
+                onClick={handleStartFresh}
                 size="lg"
                 className="h-14 px-8 text-lg font-medium rounded-full bg-primary hover:bg-primary/90 transition-all duration-200"
               >
