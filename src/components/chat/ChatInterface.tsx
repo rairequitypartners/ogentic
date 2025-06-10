@@ -31,6 +31,13 @@ interface Message {
   streaming?: boolean;
 }
 
+interface FilterState {
+  types: string[];
+  sources: string[];
+  complexity: string[];
+  industries: string[];
+}
+
 // Enhanced mock data with reasons and setup times
 const generateMockTools = (query: string): Tool[] => {
   const tools: Tool[] = [
@@ -96,6 +103,12 @@ export const ChatInterface: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [deployModalOpen, setDeployModalOpen] = useState(false);
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
+  const [filters, setFilters] = useState<FilterState>({
+    types: [],
+    sources: [],
+    complexity: [],
+    industries: [],
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { saveStack, deployStack } = useMyStacks();
 
@@ -175,14 +188,12 @@ export const ChatInterface: React.FC = () => {
   return (
     <div className="flex h-full bg-background">
       {/* Filters Sidebar */}
-      <AnimatePresence>
-        {showFilters && (
-          <FiltersSidebar 
-            isOpen={showFilters} 
-            onClose={() => setShowFilters(false)} 
-          />
-        )}
-      </AnimatePresence>
+      <FiltersSidebar 
+        isOpen={showFilters} 
+        onToggle={() => setShowFilters(!showFilters)}
+        filters={filters}
+        onFiltersChange={setFilters}
+      />
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
