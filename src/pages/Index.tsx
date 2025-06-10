@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -189,26 +190,28 @@ const Index = () => {
               </p>
               
               <div className="max-w-3xl mx-auto">
-                <AnimatePresence mode="wait">
-                  <motion.button
-                    key={currentExampleIndex}
-                    onClick={handleStartFresh}
-                    className="w-full p-6 text-left rounded-2xl bg-muted/50 hover:bg-muted transition-all duration-200 border border-border/30 hover:border-border/50 group"
-                    whileHover={{ scale: 1.02 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <span className="text-foreground font-medium text-lg">
-                      {examples[currentExampleIndex]}
-                    </span>
-                    <ChevronRight className="h-5 w-5 float-right mt-0.5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </motion.button>
-                </AnimatePresence>
+                <div className="relative h-20 mb-6 flex items-center justify-center">
+                  <AnimatePresence mode="wait">
+                    <motion.button
+                      key={currentExampleIndex}
+                      onClick={handleStartFresh}
+                      className="absolute inset-0 w-full p-6 text-left rounded-2xl bg-muted/50 hover:bg-muted transition-all duration-200 border border-border/30 hover:border-border/50 group"
+                      whileHover={{ scale: 1.02 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <span className="text-foreground font-medium text-lg">
+                        {examples[currentExampleIndex]}
+                      </span>
+                      <ChevronRight className="h-5 w-5 absolute right-6 top-1/2 transform -translate-y-1/2 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </motion.button>
+                  </AnimatePresence>
+                </div>
                 
                 {/* Progress indicators */}
-                <div className="flex justify-center mt-6 space-x-2">
+                <div className="flex justify-center space-x-2">
                   {examples.map((_, index) => (
                     <button
                       key={index}
