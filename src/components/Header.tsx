@@ -29,7 +29,7 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
     if (onStartFresh) {
       onStartFresh();
     } else {
-      navigate("/?fresh=true");
+      navigate("/discovery?fresh=true");
     }
   };
 
