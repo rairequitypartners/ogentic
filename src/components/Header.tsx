@@ -88,13 +88,6 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
                     <Plus className="mr-2 h-4 w-4" />
                     <span>New Stack</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="sm:hidden"
-                    onClick={() => navigate("/my-stacks")}
-                  >
-                    <Folder className="mr-2 h-4 w-4" />
-                    <span>My Stacks</span>
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/settings")}>
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
