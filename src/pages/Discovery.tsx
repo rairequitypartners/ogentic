@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
@@ -43,6 +42,20 @@ const Discovery = () => {
     setShowSuccess(true);
   };
 
+  const handleSelectStack = (stack: any) => {
+    console.log('Selected stack:', stack);
+    // Handle stack selection logic here
+  };
+
+  const handleExploreMore = () => {
+    handleStartFresh();
+  };
+
+  const handleRefineStack = () => {
+    setShowSuccess(false);
+    // Keep the current stack data for refinement
+  };
+
   useEffect(() => {
     const fresh = searchParams.get('fresh');
     if (fresh === 'true') {
@@ -51,12 +64,22 @@ const Discovery = () => {
   }, [searchParams]);
 
   if (showSuccess && savedStackId) {
+    // Mock deployment results for the success screen
+    const mockDeployments = [
+      {
+        platform: "Deployed to Cloud",
+        status: 'success' as const,
+        message: "Your AI stack has been successfully deployed and is ready to use."
+      }
+    ];
+
     return (
       <>
         <Header onStartFresh={handleStartFresh} />
         <SuccessScreen 
-          stackId={savedStackId}
-          onStartFresh={handleStartFresh}
+          deployments={mockDeployments}
+          onExploreMore={handleExploreMore}
+          onRefineStack={handleRefineStack}
         />
       </>
     );
@@ -75,22 +98,13 @@ const Discovery = () => {
         
         <div className="flex-1 flex">
           <div className="flex-1 max-w-4xl mx-auto">
-            <ChatInterface 
-              onQueryChange={setCurrentQuery}
-              onGeneratingChange={setIsGenerating}
-              userPreferences={preferences}
-              filters={filters}
-              onFiltersToggle={() => setShowFilters(!showFilters)}
-              onSaveSuccess={handleSaveSuccess}
-            />
+            <ChatInterface />
           </div>
           
           <div className="w-80 border-l border-border bg-muted/30 overflow-hidden">
             <RealtimeStackResults 
               query={currentQuery}
-              isGenerating={isGenerating}
-              filters={filters}
-              userPreferences={preferences}
+              onSelectStack={handleSelectStack}
             />
           </div>
         </div>
