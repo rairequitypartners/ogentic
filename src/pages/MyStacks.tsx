@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
@@ -100,13 +99,20 @@ export default function MyStacks() {
     setExpandedStack(expandedStack === stackId ? null : stackId);
   };
 
+  const handleStartFresh = () => {
+    // Navigate to the home page with fresh chat state
+    navigate("/", { replace: true });
+    // Force a page reload to ensure we get the fresh Google-like interface
+    window.location.reload();
+  };
+
   if (authLoading || !user) {
     return <div className="min-h-screen bg-background" />;
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header onStartFresh={handleStartFresh} />
       
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
@@ -161,7 +167,7 @@ export default function MyStacks() {
             <p className="text-muted-foreground mb-6">
               Start by searching for an AI stack and saving it to your collection.
             </p>
-            <Button onClick={() => navigate("/")} className="button-glow">
+            <Button onClick={handleStartFresh} className="button-glow">
               Discover AI Stacks
             </Button>
           </div>
