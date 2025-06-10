@@ -22,8 +22,21 @@ import {
   Sparkles,
   ArrowRight,
   Layers,
-  Star
+  Star,
+  Share2,
+  Copy,
+  Facebook,
+  Twitter,
+  Linkedin
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
 // Lazy load the recommendation components
@@ -56,6 +69,7 @@ export default function MyStacks() {
   const [expandedStack, setExpandedStack] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState("recent");
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -140,6 +154,55 @@ export default function MyStacks() {
       default:
         return stacksToSort;
     }
+  };
+
+  const generateShareableUrl = (stack: AIStack) => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/stack/${stack.id}`;
+  };
+
+  const generateShareText = (stack: AIStack) => {
+    const componentCount = getComponentCount(stack.components);
+    return `Check out this AI stack: "${stack.title}" - ${stack.description} (${componentCount} components) #AIStack #Automation`;
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Copied to clipboard",
+        description: "Share link has been copied to your clipboard."
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to copy",
+        description: "Please copy the link manually.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const shareToSocial = (platform: string, stack: AIStack) => {
+    const url = generateShareableUrl(stack);
+    const text = generateShareText(stack);
+    
+    let shareUrl = '';
+    
+    switch (platform) {
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+        break;
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+        break;
+      case 'linkedin':
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+        break;
+      default:
+        return;
+    }
+    
+    window.open(shareUrl, '_blank', 'width=600,height=400');
   };
 
   if (authLoading || !user) {
@@ -252,6 +315,32 @@ export default function MyStacks() {
                           </p>
                         </div>
                         <div className="flex space-x-1">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <Share2 className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => copyToClipboard(generateShareableUrl(stack))}>
+                                <Copy className="h-4 w-4 mr-2" />
+                                Copy Link
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => shareToSocial('twitter', stack)}>
+                                <Twitter className="h-4 w-4 mr-2" />
+                                Share on Twitter
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => shareToSocial('linkedin', stack)}>
+                                <Linkedin className="h-4 w-4 mr-2" />
+                                Share on LinkedIn
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => shareToSocial('facebook', stack)}>
+                                <Facebook className="h-4 w-4 mr-2" />
+                                Share on Facebook
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                           <Button
                             variant="ghost"
                             size="sm"
