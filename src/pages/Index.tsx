@@ -6,7 +6,7 @@ import { ChatInterface } from "@/components/chat/ChatInterface";
 import { MyStacksView } from "@/components/MyStacksView";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
-import { Sparkles, Zap, Target, MessageCircle, Bookmark } from "lucide-react";
+import { Sparkles, Zap, Target, MessageCircle, Bookmark, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
@@ -67,126 +67,180 @@ const Index = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background">
         
-        <div className="w-full max-w-4xl text-center space-y-8">
-          <motion.div 
-            className="space-y-4"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <motion.h1 
-              className="text-5xl md:text-6xl font-extrabold text-gradient mb-4"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              Your AI Agent. Your Stack. Your Results.
-            </motion.h1>
-            <motion.p 
-              className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
+        {/* Hero Section */}
+        <section className="relative pt-24 pb-20 px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              Stop wasting time stitching together tools and prompts. Ogentic AI helps you find, deploy, and manage the perfect AI stack — tuned to your exact workflow — in minutes.
-            </motion.p>
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            <Button 
-              onClick={() => setShowChat(true)}
-              size="lg"
-              className="text-lg px-8 py-6 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-300 transform hover:scale-105"
-            >
-              <MessageCircle className="h-5 w-5 mr-2" />
-              Start Building Your Stack
-            </Button>
-            <p className="text-sm text-muted-foreground mt-3">
-              No signup required • Deploy in minutes • Driven by outcomes
-            </p>
-          </motion.div>
-          
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-          >
-            <motion.div 
-              className="p-6 rounded-xl bg-card border card-hover"
-              whileHover={{ scale: 1.05, y: -5 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <Sparkles className="h-8 w-8 text-primary mb-4 mx-auto" />
-              <h3 className="font-semibold mb-2">Save Time</h3>
-              <p className="text-sm text-muted-foreground">
-                Stop researching and testing tools. Get a complete AI stack deployed to your workflow in minutes, not weeks.
-              </p>
-            </motion.div>
-            
-            <motion.div 
-              className="p-6 rounded-xl bg-card border card-hover"
-              whileHover={{ scale: 1.05, y: -5 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <Zap className="h-8 w-8 text-primary mb-4 mx-auto" />
-              <h3 className="font-semibold mb-2">Drive Revenue</h3>
-              <p className="text-sm text-muted-foreground">
-                Focus on results that matter. Every stack is tuned for specific outcomes — more leads, faster QA, better content.
-              </p>
-            </motion.div>
-            
-            <motion.div 
-              className="p-6 rounded-xl bg-card border card-hover"
-              whileHover={{ scale: 1.05, y: -5 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <Target className="h-8 w-8 text-primary mb-4 mx-auto" />
-              <h3 className="font-semibold mb-2">Ship Faster</h3>
-              <p className="text-sm text-muted-foreground">
-                Deploy complete workflows, not individual tools. Integrate with your existing stack and start seeing results immediately.
-              </p>
-            </motion.div>
-          </motion.div>
-
-          <motion.div
-            className="mt-12 text-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2 }}
-          >
-            <p className="text-sm text-muted-foreground mb-4">
-              Try these popular workflows:
-            </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              {[
-                "Automate personalized outbound emails for my SaaS",
-                "Speed up QA process for my engineering team", 
-                "Summarize customer support tickets weekly",
-                "Draft onboarding emails for new users",
-                "Auto-generate blog posts from product updates"
-              ].map((example, index) => (
-                <motion.button
-                  key={example}
+              <h1 className="text-5xl md:text-7xl font-bold text-foreground tracking-tight leading-tight mb-6">
+                Your AI Agent.
+                <br />
+                <span className="text-muted-foreground">Your Stack.</span>
+                <br />
+                Your Results.
+              </h1>
+              
+              <motion.p 
+                className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-12 font-medium leading-relaxed"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                Stop wasting time stitching together tools and prompts. Ogentic AI helps you find, deploy, and manage the perfect AI stack — tuned to your exact workflow — in minutes.
+              </motion.p>
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="space-y-4"
+              >
+                <Button 
                   onClick={() => setShowChat(true)}
-                  className="text-xs px-3 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors text-left"
-                  whileHover={{ scale: 1.05 }}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.4 + index * 0.1 }}
+                  size="lg"
+                  className="h-14 px-8 text-lg font-medium rounded-full bg-primary hover:bg-primary/90 transition-all duration-200"
                 >
-                  {example}
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
-        </div>
+                  Start Building Your Stack
+                  <ChevronRight className="h-5 w-5 ml-1" />
+                </Button>
+                
+                <p className="text-sm text-muted-foreground">
+                  No signup required • Deploy in minutes • Driven by outcomes
+                </p>
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="py-20 px-4 bg-muted/30">
+          <div className="max-w-6xl mx-auto">
+            <motion.div 
+              className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+            >
+              <motion.div 
+                className="text-center p-8 rounded-3xl bg-card border border-border/50 hover:border-border transition-all duration-300"
+                whileHover={{ y: -8 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Sparkles className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-2xl font-semibold mb-4 text-foreground">Save Time</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Stop researching and testing tools. Get a complete AI stack deployed to your workflow in minutes, not weeks.
+                </p>
+              </motion.div>
+              
+              <motion.div 
+                className="text-center p-8 rounded-3xl bg-card border border-border/50 hover:border-border transition-all duration-300"
+                whileHover={{ y: -8 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Zap className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-2xl font-semibold mb-4 text-foreground">Drive Revenue</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Focus on results that matter. Every stack is tuned for specific outcomes — more leads, faster QA, better content.
+                </p>
+              </motion.div>
+              
+              <motion.div 
+                className="text-center p-8 rounded-3xl bg-card border border-border/50 hover:border-border transition-all duration-300"
+                whileHover={{ y: -8 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Target className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-2xl font-semibold mb-4 text-foreground">Ship Faster</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Deploy complete workflows, not individual tools. Integrate with your existing stack and start seeing results immediately.
+                </p>
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Examples Section */}
+        <section className="py-20 px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-3xl md:text-4xl font-semibold text-foreground mb-4">
+                Try these popular workflows
+              </h2>
+              <p className="text-muted-foreground mb-12 text-lg">
+                Get started with proven AI stacks that deliver results
+              </p>
+              
+              <div className="grid gap-4 max-w-3xl mx-auto">
+                {[
+                  "Automate personalized outbound emails for my SaaS",
+                  "Speed up QA process for my engineering team", 
+                  "Summarize customer support tickets weekly",
+                  "Draft onboarding emails for new users",
+                  "Auto-generate blog posts from product updates"
+                ].map((example, index) => (
+                  <motion.button
+                    key={example}
+                    onClick={() => setShowChat(true)}
+                    className="w-full p-4 text-left rounded-2xl bg-muted/50 hover:bg-muted transition-all duration-200 border border-border/30 hover:border-border/50 group"
+                    whileHover={{ scale: 1.02 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + index * 0.1 }}
+                    viewport={{ once: true }}
+                  >
+                    <span className="text-foreground font-medium">{example}</span>
+                    <ChevronRight className="h-4 w-4 float-right mt-0.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-20 px-4 bg-muted/30">
+          <div className="max-w-3xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-4xl md:text-5xl font-semibold text-foreground mb-6 tracking-tight">
+                Ready to build your
+                <br />
+                perfect AI stack?
+              </h2>
+              
+              <Button 
+                onClick={() => setShowChat(true)}
+                size="lg"
+                className="h-14 px-8 text-lg font-medium rounded-full bg-primary hover:bg-primary/90 transition-all duration-200"
+              >
+                <MessageCircle className="h-5 w-5 mr-2" />
+                Get Started Now
+              </Button>
+            </motion.div>
+          </div>
+        </section>
       </div>
     </>
   );
