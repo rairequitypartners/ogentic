@@ -163,15 +163,30 @@ export default function MyStacks() {
 
   const generateShareText = (stack: AIStack) => {
     const componentCount = getComponentCount(stack.components);
-    return `Check out this AI stack: "${stack.title}" - ${stack.description} (${componentCount} components) #AIStack #Automation`;
+    return `🚀 Check out this AI stack I built: "${stack.title}" - ${stack.description} (${componentCount} components)
+
+✨ Build your own AI automation stack in minutes with Ogentic AI! No coding required.
+👉 Try it free: ${window.location.origin}
+
+#OgentigAI #AIStack #Automation #NoCode #AITools`;
   };
 
   const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      const shareableUrl = generateShareableUrl({ id: 'sample' } as AIStack);
+      const promotionalText = `🚀 Discover powerful AI automation stacks!
+
+✨ Build your own AI stack in minutes with Ogentic AI - No coding required!
+👉 Try it free: ${window.location.origin}
+
+${text}
+
+#OgentigAI #AIStack #Automation #NoCode`;
+      
+      await navigator.clipboard.writeText(promotionalText);
       toast({
         title: "Copied to clipboard",
-        description: "Share link has been copied to your clipboard."
+        description: "Share link with Ogentic AI promotion has been copied to your clipboard."
       });
     } catch (error) {
       toast({
@@ -190,13 +205,21 @@ export default function MyStacks() {
     
     switch (platform) {
       case 'twitter':
-        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
         break;
       case 'facebook':
-        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+        const fbText = `🚀 Check out this AI stack: "${stack.title}" - ${stack.description}
+
+Build your own AI automation stack with Ogentic AI!`;
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(fbText)}`;
         break;
       case 'linkedin':
-        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+        const linkedinText = `🚀 Check out this powerful AI stack: "${stack.title}"
+
+${stack.description}
+
+Built with Ogentic AI - the easiest way to create AI automation stacks without coding. Try it free!`;
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&summary=${encodeURIComponent(linkedinText)}`;
         break;
       default:
         return;
