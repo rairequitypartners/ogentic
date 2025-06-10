@@ -100,10 +100,8 @@ export default function MyStacks() {
   };
 
   const handleStartFresh = () => {
-    // Navigate to the home page with fresh chat state
-    navigate("/", { replace: true });
-    // Force a page reload to ensure we get the fresh Google-like interface
-    window.location.reload();
+    // Navigate to the fresh Google-like chat interface
+    navigate("/?fresh=true");
   };
 
   if (authLoading || !user) {

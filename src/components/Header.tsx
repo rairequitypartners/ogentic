@@ -1,5 +1,4 @@
 
-
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -30,8 +29,8 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
     if (onStartFresh) {
       onStartFresh();
     } else {
-      // Fallback to navigate to home if onStartFresh not provided
-      navigate("/");
+      // Navigate to fresh chat by adding URL param
+      navigate("/?fresh=true");
     }
   };
 
@@ -131,4 +130,3 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
     </header>
   );
 };
-

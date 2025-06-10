@@ -15,6 +15,17 @@ const Index = () => {
   const [showMyStacks, setShowMyStacks] = useState(false);
   const [chatKey, setChatKey] = useState(0); // Key to force chat reset
 
+  // Check URL params to determine if we should show chat immediately
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('fresh') === 'true') {
+      setShowChat(true);
+      setShowMyStacks(false);
+      // Clean up the URL
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
+
   // Redirect to onboarding if user needs it
   useEffect(() => {
     if (!authLoading && user && needsOnboarding) {
