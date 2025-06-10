@@ -54,6 +54,9 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
           <Link to="/discovery" className="text-foreground hover:text-primary transition-colors">
             Discovery
           </Link>
+          <Link to="/marketplace" className="text-foreground hover:text-primary transition-colors">
+            Marketplace
+          </Link>
           {user && (
             <>
               <Link to="/my-stacks" className="text-foreground hover:text-primary transition-colors">

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
@@ -223,14 +222,18 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               Profile
             </TabsTrigger>
+            <TabsTrigger value="discovery" className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              Discovery
+            </TabsTrigger>
             <TabsTrigger value="preferences" className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
-              Preferences
+              AI Preferences
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
@@ -299,6 +302,41 @@ export default function Settings() {
                     placeholder="Tell us about yourself..."
                   />
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Discovery Filters */}
+          <TabsContent value="discovery">
+            <Card>
+              <CardHeader>
+                <CardTitle>Discovery & Search Preferences</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Configure your default filters and preferences for AI tool discovery
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {Object.entries(FILTER_OPTIONS).map(([category, options]) => (
+                  <Card key={category} className="p-4">
+                    <h4 className="font-medium mb-3 capitalize">
+                      {category === 'types' ? 'Preferred Component Types' : `Preferred ${category}`}
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {options.map((option) => (
+                        <div key={option.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`discovery-${category}-${option.id}`}
+                            checked={userPrefs[category as keyof Pick<UserPreferences, 'types' | 'sources' | 'complexity' | 'industries'>].includes(option.id)}
+                            onCheckedChange={() => handleFilterToggle(category as keyof Pick<UserPreferences, 'types' | 'sources' | 'complexity' | 'industries'>, option.id)}
+                          />
+                          <Label htmlFor={`discovery-${category}-${option.id}`} className="text-sm cursor-pointer">
+                            {option.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                ))}
               </CardContent>
             </Card>
           </TabsContent>

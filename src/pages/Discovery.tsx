@@ -1,67 +1,22 @@
 
-import { useState, useEffect, lazy, Suspense } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { AIEnhancedSearch } from "@/components/discovery/AIEnhancedSearch";
-import { DiscoveryFilters } from "@/components/discovery/DiscoveryFilters";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ToolCardSkeleton, StackCardSkeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
-
-// Lazy load heavy components
-const StackResults = lazy(() => import("@/components/discovery/StackResults").then(m => ({ default: m.StackResults })));
-const ToolsLibrary = lazy(() => import("@/components/discovery/ToolsLibrary").then(m => ({ default: m.ToolsLibrary })));
-const RecommendedStacks = lazy(() => import("@/components/discovery/RecommendedStacks").then(m => ({ default: m.RecommendedStacks })));
-
-interface FilterState {
-  types: string[];
-  sources: string[];
-  complexity: string[];
-  industries: string[];
-}
-
-// Loading components for each tab
-const ToolsLoadingFallback = () => (
-  <div className="space-y-4">
-    <div className="flex items-center space-x-2 text-primary">
-      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-      <span>Loading tools...</span>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {[...Array(4)].map((_, i) => (
-        <ToolCardSkeleton key={i} />
-      ))}
-    </div>
-  </div>
-);
-
-const StacksLoadingFallback = () => (
-  <div className="space-y-4">
-    <div className="flex items-center space-x-2 text-primary">
-      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-      <span>Loading stacks...</span>
-    </div>
-    {[...Array(2)].map((_, i) => (
-      <StackCardSkeleton key={i} />
-    ))}
-  </div>
-);
+import { Sparkles, ArrowRight, Search, Layers, Users } from "lucide-react";
 
 const Discovery = () => {
   const { user } = useAuth();
   const { preferences } = useUserPreferences();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState<FilterState>({
-    types: [],
-    sources: [],
-    complexity: [],
-    industries: []
-  });
-  const [activeTab, setActiveTab] = useState("tools");
+  const navigate = useNavigate();
 
-  // Get initial search query from URL parameters
   useEffect(() => {
     const queryParam = searchParams.get('q');
     if (queryParam) {
@@ -71,86 +26,108 @@ const Discovery = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    // Update URL with search query
-    if (query) {
-      setSearchParams({ q: query });
-    } else {
-      setSearchParams({});
+    if (query.trim()) {
+      // Navigate to marketplace with search query
+      navigate(`/marketplace?q=${encodeURIComponent(query)}`);
     }
   };
 
-  const handleFilterChange = (newFilters: FilterState) => {
-    setFilters(newFilters);
+  const handleFilterChange = () => {
+    // Filters are now handled in marketplace
   };
+
+  const quickSearches = [
+    "Customer support automation",
+    "SEO content generation", 
+    "Code review assistant",
+    "Email marketing automation",
+    "Sales lead qualification",
+    "Document analysis"
+  ];
 
   return (
     <>
       <Header />
       <div className="min-h-screen bg-background pt-16">
-        <div className="max-w-7xl mx-auto p-6 space-y-6">
-          <div className="space-y-4">
-            <h1 className="text-4xl font-bold text-gradient">AI Stack Discovery</h1>
-            <p className="text-xl text-muted-foreground">
-              Discover, filter, and explore the best AI tools, prompts, models, and complete stacks using natural language
+        <div className="max-w-4xl mx-auto px-6">
+          {/* Hero Section */}
+          <div className="text-center py-20 space-y-8">
+            <div className="flex items-center justify-center space-x-3 mb-6">
+              <Sparkles className="h-12 w-12 text-primary" />
+              <h1 className="text-6xl font-bold text-gradient">Ogentic</h1>
+            </div>
+            
+            <p className="text-2xl text-muted-foreground max-w-2xl mx-auto">
+              Discover AI tools and build custom stacks with natural language
             </p>
             
-            <AIEnhancedSearch 
-              onSearch={handleSearch}
-              onFiltersChange={handleFilterChange}
-              userPreferences={preferences}
-              context={activeTab as any}
-              initialQuery={searchQuery}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Filters Sidebar */}
-            <div className="lg:col-span-1">
-              <DiscoveryFilters 
-                filters={filters}
-                onFilterChange={handleFilterChange}
+            <div className="max-w-2xl mx-auto">
+              <AIEnhancedSearch 
+                onSearch={handleSearch}
+                onFiltersChange={handleFilterChange}
                 userPreferences={preferences}
+                context="stacks"
+                initialQuery={searchQuery}
               />
             </div>
 
-            {/* Main Content */}
-            <div className="lg:col-span-3">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="tools">Individual Tools</TabsTrigger>
-                  <TabsTrigger value="stacks">Complete Stacks</TabsTrigger>
-                  <TabsTrigger value="recommended">AI Recommended</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="tools" className="mt-6">
-                  <Suspense fallback={<ToolsLoadingFallback />}>
-                    <ToolsLibrary 
-                      searchQuery={searchQuery}
-                      filters={filters}
-                    />
-                  </Suspense>
-                </TabsContent>
-                
-                <TabsContent value="stacks" className="mt-6">
-                  <Suspense fallback={<StacksLoadingFallback />}>
-                    <StackResults 
-                      searchQuery={searchQuery}
-                      filters={filters}
-                      userPreferences={preferences}
-                    />
-                  </Suspense>
-                </TabsContent>
-                
-                <TabsContent value="recommended" className="mt-6">
-                  <Suspense fallback={<StacksLoadingFallback />}>
-                    <RecommendedStacks 
-                      userPreferences={preferences}
-                      searchQuery={searchQuery}
-                    />
-                  </Suspense>
-                </TabsContent>
-              </Tabs>
+            {/* Quick Searches */}
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Try searching for:</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {quickSearches.map((search, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSearch(search)}
+                    className="px-4 py-2 text-sm bg-background border rounded-full hover:bg-accent transition-colors"
+                  >
+                    {search}
+                  </button>
+                ))}
+              </div>
             </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-20">
+            <Card className="card-hover cursor-pointer" onClick={() => navigate("/marketplace")}>
+              <CardContent className="p-6 text-center space-y-4">
+                <Search className="h-12 w-12 text-primary mx-auto" />
+                <h3 className="text-lg font-semibold">Browse Marketplace</h3>
+                <p className="text-sm text-muted-foreground">
+                  Explore thousands of AI tools, prompts, and models
+                </p>
+                <Button variant="ghost" className="w-full">
+                  Explore <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="card-hover cursor-pointer" onClick={() => navigate("/my-stacks")}>
+              <CardContent className="p-6 text-center space-y-4">
+                <Layers className="h-12 w-12 text-primary mx-auto" />
+                <h3 className="text-lg font-semibold">My Stacks</h3>
+                <p className="text-sm text-muted-foreground">
+                  View and manage your saved AI stacks
+                </p>
+                <Button variant="ghost" className="w-full">
+                  View Stacks <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="card-hover cursor-pointer" onClick={() => navigate("/")}>
+              <CardContent className="p-6 text-center space-y-4">
+                <Users className="h-12 w-12 text-primary mx-auto" />
+                <h3 className="text-lg font-semibold">Build Custom Stack</h3>
+                <p className="text-sm text-muted-foreground">
+                  Chat with AI to create personalized solutions
+                </p>
+                <Button variant="ghost" className="w-full">
+                  Start Building <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
