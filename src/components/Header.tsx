@@ -29,7 +29,7 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
     if (onStartFresh) {
       onStartFresh();
     } else {
-      navigate("/discovery?fresh=true");
+      navigate("/?fresh=true");
     }
   };
 
@@ -45,12 +45,6 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
           <Sparkles className="h-6 w-6 text-primary" />
           <span className="text-xl font-bold text-gradient">Ogentic</span>
         </button>
-        
-        <nav className="hidden md:flex items-center space-x-8">
-          <Link to="/discovery" className="text-foreground hover:text-primary transition-colors">
-            Discovery
-          </Link>
-        </nav>
         
         <div className="flex items-center space-x-4">
           <Button 
