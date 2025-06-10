@@ -1,17 +1,18 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChatInterface } from "@/components/chat/ChatInterface";
+import { MyStacksView } from "@/components/MyStacksView";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
-import { Sparkles, Zap, Target, MessageCircle } from "lucide-react";
+import { Sparkles, Zap, Target, MessageCircle, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const { user, needsOnboarding, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [showChat, setShowChat] = useState(false);
+  const [showMyStacks, setShowMyStacks] = useState(false);
 
   // Redirect to onboarding if user needs it
   useEffect(() => {
@@ -20,11 +21,42 @@ const Index = () => {
     }
   }, [user, needsOnboarding, authLoading, navigate]);
 
+  if (showMyStacks) {
+    return (
+      <div className="h-screen">
+        <Header />
+        <div className="h-full pt-16 overflow-auto">
+          <div className="p-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowMyStacks(false)}
+              className="mb-4"
+            >
+              ← Back to Chat
+            </Button>
+            <MyStacksView />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (showChat) {
     return (
       <div className="h-screen">
         <Header />
-        <div className="h-full pt-16">
+        <div className="h-full pt-16 relative">
+          <div className="absolute top-4 right-4 z-10">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowMyStacks(true)}
+              className="bg-background/80 backdrop-blur-sm"
+            >
+              <Bookmark className="h-4 w-4 mr-2" />
+              My Stacks
+            </Button>
+          </div>
           <ChatInterface />
         </div>
       </div>
@@ -35,6 +67,7 @@ const Index = () => {
     <>
       <Header />
       <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 flex items-center justify-center p-4">
+        
         <div className="w-full max-w-4xl text-center space-y-8">
           <motion.div 
             className="space-y-4"

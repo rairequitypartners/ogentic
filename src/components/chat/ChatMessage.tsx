@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Bot, User, ExternalLink, Star, Zap, Settings, BookOpen } from 'lucide-react';
+import { Bot, User, ExternalLink, Star, Zap, Settings, BookOpen, Rocket, Clock, Save } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,8 @@ interface Tool {
   type: string;
   url?: string;
   featured?: boolean;
+  reason?: string;
+  setupTime?: string;
 }
 
 interface Message {
@@ -28,6 +30,8 @@ interface Message {
 
 interface ChatMessageProps {
   message: Message;
+  onDeployTool?: (tool: Tool) => void;
+  onSaveTool?: (tool: Tool) => void;
 }
 
 const getTypeIcon = (type: string) => {
@@ -50,7 +54,11 @@ const getTypeColor = (type: string) => {
   }
 };
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
+export const ChatMessage: React.FC<ChatMessageProps> = ({ 
+  message, 
+  onDeployTool, 
+  onSaveTool 
+}) => {
   const isUser = message.type === 'user';
 
   return (
@@ -147,35 +155,68 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
                           </p>
                         </div>
 
-                        <div className="flex items-center justify-between">
+                        {/* Why this was recommended */}
+                        {tool.reason && (
+                          <div className="mb-3 p-2 bg-blue-50 rounded-lg border-l-4 border-blue-200">
+                            <p className="text-xs text-blue-800">
+                              <strong>Why recommended:</strong> {tool.reason}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between mb-3">
                           <Badge variant="outline" className="text-xs">
                             {tool.source}
                           </Badge>
+                          {tool.setupTime && (
+                            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              <span>{tool.setupTime}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Lifecycle Support Buttons - Outcome-oriented */}
+                        <div className="space-y-2">
+                          <div className="flex space-x-1">
+                            <Button 
+                              size="sm"
+                              className="flex-1 text-xs"
+                              onClick={() => onDeployTool?.(tool)}
+                            >
+                              <Rocket className="h-3 w-3 mr-1" />
+                              Deploy This Stack
+                            </Button>
+                            
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="text-xs"
+                              onClick={() => onSaveTool?.(tool)}
+                            >
+                              <Save className="h-3 w-3" />
+                            </Button>
+                          </div>
                           
                           <div className="flex space-x-1">
                             <Button 
                               size="sm" 
                               variant="ghost"
-                              className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="flex-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
                             >
-                              <BookOpen className="h-3 w-3 mr-1" />
-                              Setup
+                              Set Up in {tool.setupTime || '10 Min'}
                             </Button>
                             
-                            <Button 
-                              size="sm"
-                              className="h-7 px-3 text-xs"
-                              onClick={() => tool.url && window.open(tool.url, '_blank')}
-                            >
-                              {tool.url ? (
-                                <>
-                                  <ExternalLink className="h-3 w-3 mr-1" />
-                                  Try Now
-                                </>
-                              ) : (
-                                'Learn More'
-                              )}
-                            </Button>
+                            {tool.url && (
+                              <Button 
+                                size="sm"
+                                variant="ghost"
+                                className="text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => tool.url && window.open(tool.url, '_blank')}
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </CardContent>
