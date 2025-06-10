@@ -21,7 +21,8 @@ import {
   Palette, 
   Filter,
   Save,
-  X
+  X,
+  CreditCard
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -118,6 +119,23 @@ export default function Settings() {
     website: "",
   });
 
+  // Mock billing data - in a real app, this would come from your payment provider
+  const [billingData, setBillingData] = useState({
+    subscription: {
+      plan: "Pro",
+      status: "active",
+      nextBilling: "2024-07-10",
+      amount: "$29.99"
+    },
+    paymentMethod: {
+      type: "card",
+      last4: "4242",
+      brand: "Visa",
+      expiryMonth: "12",
+      expiryYear: "2026"
+    }
+  });
+
   useEffect(() => {
     if (preferences) {
       setUserPrefs(prev => ({
@@ -206,6 +224,14 @@ export default function Settings() {
     });
   };
 
+  const handleSubscriptionAction = (action: string) => {
+    // Mock actions - in a real app, these would integrate with your payment provider
+    toast({
+      title: `${action} initiated`,
+      description: `Your ${action.toLowerCase()} request has been processed.`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -222,7 +248,7 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               Profile
@@ -234,6 +260,10 @@ export default function Settings() {
             <TabsTrigger value="preferences" className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
               AI Preferences
+            </TabsTrigger>
+            <TabsTrigger value="billing" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Billing
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
@@ -367,6 +397,106 @@ export default function Settings() {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          </TabsContent>
+
+          {/* Billing */}
+          <TabsContent value="billing">
+            <div className="space-y-6">
+              {/* Current Subscription */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Current Subscription</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">{billingData.subscription.plan} Plan</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Status: <Badge variant={billingData.subscription.status === 'active' ? 'default' : 'secondary'}>
+                          {billingData.subscription.status}
+                        </Badge>
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">{billingData.subscription.amount}/month</p>
+                      <p className="text-sm text-muted-foreground">
+                        Next billing: {new Date(billingData.subscription.nextBilling).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => handleSubscriptionAction("Upgrade")}>
+                      Upgrade Plan
+                    </Button>
+                    <Button variant="outline" onClick={() => handleSubscriptionAction("Downgrade")}>
+                      Change Plan
+                    </Button>
+                    <Button variant="outline" onClick={() => handleSubscriptionAction("Cancel")}>
+                      Cancel Subscription
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Payment Method */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payment Method</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <CreditCard className="h-6 w-6" />
+                      <div>
+                        <p className="font-medium">
+                          {billingData.paymentMethod.brand} •••• {billingData.paymentMethod.last4}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Expires {billingData.paymentMethod.expiryMonth}/{billingData.paymentMethod.expiryYear}
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="outline" onClick={() => handleSubscriptionAction("Update Payment Method")}>
+                      Update
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Billing History */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Billing History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {[
+                      { date: "2024-06-10", amount: "$29.99", status: "Paid" },
+                      { date: "2024-05-10", amount: "$29.99", status: "Paid" },
+                      { date: "2024-04-10", amount: "$29.99", status: "Paid" },
+                    ].map((invoice, index) => (
+                      <div key={index} className="flex items-center justify-between py-2">
+                        <div>
+                          <p className="font-medium">{new Date(invoice.date).toLocaleDateString()}</p>
+                          <p className="text-sm text-muted-foreground">Monthly subscription</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">{invoice.amount}</p>
+                          <Badge variant="default" className="text-xs">
+                            {invoice.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Separator className="my-4" />
+                  <Button variant="outline" className="w-full">
+                    View All Invoices
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
