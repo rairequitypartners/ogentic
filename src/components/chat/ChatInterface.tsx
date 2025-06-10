@@ -8,6 +8,7 @@ import { FiltersSidebar } from './FiltersSidebar';
 import { DeployModal } from './DeployModal';
 import { useMyStacks } from '@/hooks/useMyStacks';
 import { getStackRecommendation } from '@/utils/stackRecommendations';
+import { getFirstChatTurn, detectUserIntent } from '@/utils/firstChatTurns';
 
 interface Tool {
   id: string;
@@ -103,6 +104,7 @@ export const ChatInterface: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [deployModalOpen, setDeployModalOpen] = useState(false);
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
+  const [firstChatTurn, setFirstChatTurn] = useState<string>('');
   const [filters, setFilters] = useState<FilterState>({
     types: [],
     sources: [],
@@ -111,6 +113,12 @@ export const ChatInterface: React.FC = () => {
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { saveStack, deployStack } = useMyStacks();
+
+  // Initialize first chat turn when component mounts
+  useEffect(() => {
+    const turn = getFirstChatTurn();
+    setFirstChatTurn(turn.message);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -134,6 +142,25 @@ export const ChatInterface: React.FC = () => {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+
+    // If this is the first message, detect intent and update the AI's opening message
+    if (messages.length === 0) {
+      const detectedIntent = detectUserIntent(currentQuery);
+      const appropriateTurn = getFirstChatTurn(detectedIntent);
+      
+      // Add the personalized first turn message
+      const firstTurnMessage: Message = {
+        id: `ai-first-${Date.now()}`,
+        type: 'assistant',
+        content: appropriateTurn.message + (appropriateTurn.followUp ? `\n\n${appropriateTurn.followUp}` : ''),
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, firstTurnMessage]);
+      
+      // Small delay before the main response
+      await new Promise(resolve => setTimeout(resolve, 800));
+    }
 
     // Simulate AI response with streaming
     const streamingMessage: Message = {
@@ -236,12 +263,10 @@ export const ChatInterface: React.FC = () => {
                 className="text-center py-12"
               >
                 <h2 className="text-2xl font-bold mb-4 text-gradient">
-                  Hey! I can help you build the perfect AI stack
+                  {firstChatTurn || "Hey! I can help you build the perfect AI stack"}
                 </h2>
-                <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-                  I can help you build a stack of AI tools, models, prompts, and agents that will actually drive results — not just look good in a list.
-                  <br /><br />
-                  What are you working on today? Describe the task or outcome you want — I'll find the best stack to make it happen.
+                <p className="text-muted-foreground mb-8 max-w-2xl mx-auto whitespace-pre-line">
+                  {firstChatTurn || "I can help you build a stack of AI tools, models, prompts, and agents that will actually drive results — not just look good in a list.\n\nWhat are you working on today? Describe the task or outcome you want — I'll find the best stack to make it happen."}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
                   {[
