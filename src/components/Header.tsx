@@ -9,7 +9,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Sparkles, User, LogOut, Folder, Plus, Settings } from "lucide-react";
+import { Sparkles, User, LogOut, Plus, Settings } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 interface HeaderProps {
@@ -58,47 +58,38 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
           </Button>
 
           {user ? (
-            <>
-              <Link to="/my-stacks">
-                <Button variant="ghost" size="sm" className="hidden sm:flex">
-                  <Folder className="h-4 w-4 mr-2" />
-                  My Stacks
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>
+                      {getInitials(user.user_metadata?.full_name || user.email)}
+                    </AvatarFallback>
+                  </Avatar>
                 </Button>
-              </Link>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        {getInitials(user.user_metadata?.full_name || user.email)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
-                  <DropdownMenuItem className="flex items-center">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>{user.email}</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="sm:hidden"
-                    onClick={handleNewStack}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    <span>New Stack</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/settings")}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sign out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuItem className="flex items-center">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>{user.email}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="sm:hidden"
+                  onClick={handleNewStack}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  <span>New Stack</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/settings")}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Link to="/auth">
               <Button variant="outline" size="sm">
