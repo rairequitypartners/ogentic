@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -47,9 +46,11 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
         </button>
         
         <nav className="hidden md:flex items-center space-x-8">
-          <Link to="/" className="text-foreground hover:text-primary transition-colors">
-            Home
-          </Link>
+          {!user && (
+            <Link to="/" className="text-foreground hover:text-primary transition-colors">
+              Home
+            </Link>
+          )}
           <Link to="/discovery" className="text-foreground hover:text-primary transition-colors">
             Discovery
           </Link>
