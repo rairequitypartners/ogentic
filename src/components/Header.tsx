@@ -1,4 +1,5 @@
 
+
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -12,13 +13,26 @@ import {
 import { Sparkles, User, LogOut, Folder, Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
-export const Header = () => {
+interface HeaderProps {
+  onStartFresh?: () => void;
+}
+
+export const Header = ({ onStartFresh }: HeaderProps) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const handleNewStack = () => {
+    if (onStartFresh) {
+      onStartFresh();
+    } else {
+      // Fallback to navigate to home if onStartFresh not provided
+      navigate("/");
+    }
   };
 
   const getInitials = (name?: string) => {
@@ -29,10 +43,10 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2">
+        <button onClick={handleNewStack} className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
           <Sparkles className="h-6 w-6 text-primary" />
           <span className="text-xl font-bold text-gradient">Ogentic</span>
-        </Link>
+        </button>
         
         <nav className="hidden md:flex items-center space-x-8">
           <Link to="/" className="text-foreground hover:text-primary transition-colors">
@@ -50,12 +64,15 @@ export const Header = () => {
         
         <div className="flex items-center space-x-4">
           {/* New Stack Button */}
-          <Link to="/">
-            <Button variant="outline" size="sm" className="hidden sm:flex">
-              <Plus className="h-4 w-4 mr-2" />
-              New Stack
-            </Button>
-          </Link>
+          <Button 
+            onClick={handleNewStack}
+            variant="outline" 
+            size="sm" 
+            className="hidden sm:flex"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Stack
+          </Button>
 
           {user ? (
             <>
@@ -83,7 +100,7 @@ export const Header = () => {
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     className="sm:hidden"
-                    onClick={() => navigate("/")}
+                    onClick={handleNewStack}
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     <span>New Stack</span>
@@ -114,3 +131,4 @@ export const Header = () => {
     </header>
   );
 };
+

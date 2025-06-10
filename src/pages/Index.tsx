@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -33,7 +32,7 @@ const Index = () => {
   if (showMyStacks) {
     return (
       <div className="h-screen">
-        <Header />
+        <Header onStartFresh={handleStartFresh} />
         <div className="h-full pt-16 overflow-auto">
           <div className="p-4">
             <Button 
@@ -53,7 +52,7 @@ const Index = () => {
   if (showChat) {
     return (
       <div className="h-screen">
-        <Header />
+        <Header onStartFresh={handleStartFresh} />
         <div className="h-full pt-16 relative">
           <div className="absolute top-4 right-4 z-10">
             <Button 
@@ -74,7 +73,7 @@ const Index = () => {
 
   return (
     <>
-      <Header />
+      <Header onStartFresh={handleStartFresh} />
       <div className="min-h-screen bg-background">
         
         {/* Hero Section */}
