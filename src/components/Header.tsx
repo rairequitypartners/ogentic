@@ -55,9 +55,14 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
             Discovery
           </Link>
           {user && (
-            <Link to="/my-stacks" className="text-foreground hover:text-primary transition-colors">
-              My Stacks
-            </Link>
+            <>
+              <Link to="/my-stacks" className="text-foreground hover:text-primary transition-colors">
+                My Stacks
+              </Link>
+              <Link to="/settings" className="text-foreground hover:text-primary transition-colors">
+                Settings
+              </Link>
+            </>
           )}
         </nav>
         
