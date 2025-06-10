@@ -1,27 +1,40 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "./ChatMessage";
-import { DeployModal } from "./DeployModal";
+import { DeployFlow } from "@/components/deploy/DeployFlow";
 import { useSettings } from "@/contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Message {
   id: string;
   content: string;
-  type: 'user' | 'assistant';
+  role: 'user' | 'assistant';
   timestamp: Date;
   isLoading?: boolean;
   tools?: any[];
+  stack?: {
+    title: string;
+    description: string;
+    components: Array<{
+      type: 'prompt' | 'tool' | 'model' | 'agent';
+      name: string;
+      description: string;
+      reason: string;
+      source?: string;
+      featured?: boolean;
+    }>;
+  };
 }
 
 export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [deployModalOpen, setDeployModalOpen] = useState(false);
-  const [selectedTool, setSelectedTool] = useState(null);
+  const [deployFlowOpen, setDeployFlowOpen] = useState(false);
+  const [selectedStack, setSelectedStack] = useState(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { clarifyingQuestionsEnabled } = useSettings();
 
@@ -42,7 +55,7 @@ export const ChatInterface = () => {
     const userMessage: Message = {
       id: Date.now().toString(),
       content: input.trim(),
-      type: 'user',
+      role: 'user',
       timestamp: new Date()
     };
 
@@ -50,42 +63,61 @@ export const ChatInterface = () => {
     setInput("");
     setIsLoading(true);
 
-    // Simulate AI response
+    // Simulate AI response with stack
     setTimeout(() => {
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: "I'll help you build the perfect AI stack for your needs. Let me analyze your requirements and suggest some options...",
-        type: 'assistant',
+        content: "I'll help you build the perfect AI stack for your needs. Based on your requirements, I've created a comprehensive solution.",
+        role: 'assistant',
         timestamp: new Date(),
-        tools: [
-          {
-            id: "1",
-            name: "Email Automation Stack",
-            description: "Automate personalized outbound emails",
-            useCase: "Marketing automation for SaaS companies",
-            source: "Recommended by Ogentic",
-            type: "tool",
-            setupTime: "15 min"
-          }
-        ]
+        stack: {
+          title: "Email Automation Stack",
+          description: "Complete solution for personalized outbound email campaigns with AI-powered content generation and tracking",
+          components: [
+            {
+              type: "prompt" as const,
+              name: "Email Personalization Prompt",
+              description: "AI prompt for generating personalized email content based on prospect data",
+              reason: "This prompt ensures your emails feel personal and relevant to each recipient, improving response rates by 40%"
+            },
+            {
+              type: "tool" as const,
+              name: "Clay.com",
+              description: "Data enrichment and prospect research automation",
+              reason: "Clay automatically finds and enriches prospect data, saving 3+ hours per day on manual research"
+            },
+            {
+              type: "model" as const,
+              name: "GPT-4",
+              description: "AI model for content generation and personalization",
+              reason: "GPT-4 provides the best balance of creativity and accuracy for email content generation"
+            },
+            {
+              type: "agent" as const,
+              name: "Email Sequence Agent",
+              description: "Automated follow-up sequences based on recipient behavior",
+              reason: "This agent handles follow-ups intelligently, increasing conversion rates without manual work"
+            }
+          ]
+        }
       };
       setMessages(prev => [...prev, aiMessage]);
       setIsLoading(false);
     }, 1500);
   };
 
-  const handleDeployTool = (tool: any) => {
-    setSelectedTool(tool);
-    setDeployModalOpen(true);
+  const handleDeployStack = (stack: any) => {
+    setSelectedStack(stack);
+    setDeployFlowOpen(true);
   };
 
-  const handleDeploy = (tool: any, platform: string) => {
-    console.log('Deploying tool:', tool, 'to platform:', platform);
+  const handleDeployComplete = (destination: string) => {
+    console.log('Stack deployed to:', destination);
   };
 
   const suggestedQueries = [
     "Automate personalized outbound emails for my SaaS",
-    "Speed up QA process for my engineering team",
+    "Speed up QA process for my engineering team", 
     "Summarize customer support tickets weekly",
     "Auto-generate blog posts from product updates"
   ];
@@ -103,7 +135,7 @@ export const ChatInterface = () => {
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Main Content - Google-style */}
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="w-full max-w-2xl mx-auto">
             {/* Logo */}
@@ -111,18 +143,15 @@ export const ChatInterface = () => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-center mb-12"
+              className="text-center mb-16"
             >
-              <div className="flex items-center justify-center space-x-3 mb-4">
-                <Sparkles className="h-16 w-16 text-primary" />
-              </div>
-              <h1 className="text-6xl font-light text-foreground mb-2">Ogentic</h1>
+              <h1 className="text-6xl font-light text-foreground mb-4">Ogentic</h1>
               <p className="text-xl text-muted-foreground font-light">
                 AI Stack Discovery
               </p>
             </motion.div>
 
-            {/* Search Form */}
+            {/* Search Form - Google-style */}
             <motion.form
               onSubmit={handleSubmit}
               initial={{ opacity: 0, y: 20 }}
@@ -131,7 +160,7 @@ export const ChatInterface = () => {
               className="mb-8"
             >
               <div className="relative group">
-                <div className="absolute inset-0 bg-background border border-border rounded-full shadow-lg"></div>
+                <div className="absolute inset-0 bg-background border border-border rounded-full shadow-lg hover:shadow-xl transition-shadow duration-200"></div>
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -231,7 +260,7 @@ export const ChatInterface = () => {
               >
                 <ChatMessage 
                   message={message} 
-                  onDeployTool={handleDeployTool}
+                  onDeployStack={handleDeployStack}
                 />
               </motion.div>
             ))}
@@ -282,11 +311,11 @@ export const ChatInterface = () => {
         </form>
       </div>
 
-      <DeployModal
-        isOpen={deployModalOpen}
-        onClose={() => setDeployModalOpen(false)}
-        tool={selectedTool}
-        onDeploy={handleDeploy}
+      <DeployFlow
+        isOpen={deployFlowOpen}
+        onClose={() => setDeployFlowOpen(false)}
+        stack={selectedStack}
+        onDeployComplete={handleDeployComplete}
       />
     </div>
   );
