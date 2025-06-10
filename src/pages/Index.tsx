@@ -1,18 +1,17 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChatInterface } from "@/components/chat/ChatInterface";
-import { MyStacksView } from "@/components/MyStacksView";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
-import { Sparkles, Zap, Target, MessageCircle, Bookmark, ChevronRight } from "lucide-react";
+import { Sparkles, Zap, Target, MessageCircle, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const { user, needsOnboarding, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [showChat, setShowChat] = useState(false);
-  const [showMyStacks, setShowMyStacks] = useState(false);
   const [chatKey, setChatKey] = useState(0); // Key to force chat reset
 
   // Check URL params to determine if we should show chat immediately
@@ -20,7 +19,6 @@ const Index = () => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('fresh') === 'true') {
       setShowChat(true);
-      setShowMyStacks(false);
       // Clean up the URL
       window.history.replaceState({}, '', '/');
     }
@@ -37,45 +35,13 @@ const Index = () => {
   const handleStartFresh = () => {
     setChatKey(prev => prev + 1); // Force chat component to remount
     setShowChat(true);
-    setShowMyStacks(false);
   };
-
-  if (showMyStacks) {
-    return (
-      <div className="h-screen">
-        <Header onStartFresh={handleStartFresh} />
-        <div className="h-full pt-16 overflow-auto">
-          <div className="p-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowMyStacks(false)}
-              className="mb-4"
-            >
-              ← Back to Chat
-            </Button>
-            <MyStacksView />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (showChat) {
     return (
       <div className="h-screen">
         <Header onStartFresh={handleStartFresh} />
         <div className="h-full pt-16 relative">
-          <div className="absolute top-4 right-4 z-10">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowMyStacks(true)}
-              className="bg-background/80 backdrop-blur-sm"
-            >
-              <Bookmark className="h-4 w-4 mr-2" />
-              My Stacks
-            </Button>
-          </div>
           <ChatInterface key={chatKey} />
         </div>
       </div>
