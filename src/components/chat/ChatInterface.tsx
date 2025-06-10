@@ -1,392 +1,272 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Filter, Menu, X, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ChatMessage } from './ChatMessage';
-import { FiltersSidebar } from './FiltersSidebar';
-import { DeployModal } from './DeployModal';
-import { useMyStacks } from '@/hooks/useMyStacks';
-import { useAIDiscovery } from '@/hooks/useAIDiscovery';
-import { useSettings } from '@/contexts/SettingsContext';
-import { getStackRecommendation } from '@/utils/stackRecommendations';
-import { getFirstChatTurn, detectUserIntent } from '@/utils/firstChatTurns';
 
-interface Tool {
-  id: string;
-  name: string;
-  description: string;
-  useCase: string;
-  source: string;
-  type: string;
-  url?: string;
-  featured?: boolean;
-  reason?: string;
-  setupTime?: string;
-}
+import { useState, useRef, useEffect } from "react";
+import { Send, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ChatMessage } from "./ChatMessage";
+import { DeployModal } from "./DeployModal";
+import { useSettings } from "@/contexts/SettingsContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Message {
   id: string;
-  type: 'user' | 'assistant';
   content: string;
+  role: 'user' | 'assistant';
   timestamp: Date;
-  tools?: Tool[];
-  streaming?: boolean;
+  isLoading?: boolean;
+  stacks?: any[];
 }
 
-interface FilterState {
-  types: string[];
-  sources: string[];
-  complexity: string[];
-  industries: string[];
-}
-
-// Enhanced mock data with dynamic reasons based on query
-const generateMockTools = (query: string): Tool[] => {
-  const tools: Tool[] = [
-    {
-      id: '1',
-      name: 'ChatGPT',
-      description: 'Advanced AI assistant for coding, writing, and problem-solving',
-      useCase: 'Perfect for content creation and customer support automation',
-      source: 'OpenAI',
-      type: 'model',
-      url: 'https://chat.openai.com',
-      featured: true,
-      reason: getStackRecommendation(query, 0),
-      setupTime: '5 min'
-    },
-    {
-      id: '2',
-      name: 'Claude',
-      description: 'AI assistant specialized in analysis, writing, and coding tasks',
-      useCase: 'Ideal for complex document analysis and technical writing',
-      source: 'Anthropic',
-      type: 'model',
-      url: 'https://claude.ai',
-      featured: true,
-      reason: getStackRecommendation(query, 1),
-      setupTime: '3 min'
-    },
-    {
-      id: '3',
-      name: 'Zapier AI',
-      description: 'Automated workflow creation with AI assistance',
-      useCase: 'Streamline repetitive tasks and connect your favorite apps',
-      source: 'Zapier',
-      type: 'tool',
-      url: 'https://zapier.com',
-      reason: getStackRecommendation(query, 2),
-      setupTime: '10 min'
-    },
-    {
-      id: '4',
-      name: 'Custom Sales Agent',
-      description: 'AI agent for lead qualification and follow-up',
-      useCase: 'Automate your sales pipeline and increase conversion rates',
-      source: 'Custom',
-      type: 'agent',
-      featured: true,
-      reason: getStackRecommendation(query, 3),
-      setupTime: '15 min'
-    }
-  ];
-
-  return tools.filter(tool => 
-    tool.name.toLowerCase().includes(query.toLowerCase()) ||
-    tool.description.toLowerCase().includes(query.toLowerCase()) ||
-    tool.useCase.toLowerCase().includes(query.toLowerCase())
-  );
-};
-
-export const ChatInterface: React.FC = () => {
+export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
   const [deployModalOpen, setDeployModalOpen] = useState(false);
-  const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
-  const [firstChatTurn, setFirstChatTurn] = useState<string>('');
-  const [filters, setFilters] = useState<FilterState>({
-    types: [],
-    sources: [],
-    complexity: [],
-    industries: [],
-  });
+  const [selectedStack, setSelectedStack] = useState(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { saveStack, deployStack } = useMyStacks();
   const { clarifyingQuestionsEnabled } = useSettings();
-  const { parseQuery } = useAIDiscovery();
 
-  // Initialize first chat turn when component mounts
-  useEffect(() => {
-    const turn = getFirstChatTurn();
-    setFirstChatTurn(turn.message);
-  }, []);
+  const hasMessages = messages.length > 0;
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      type: 'user',
-      content: input,
+      id: Date.now().toString(),
+      content: input.trim(),
+      role: 'user',
       timestamp: new Date()
     };
 
-    let queryToProcess = input;
-    
-    // Append clarifying prompt if enabled
-    if (clarifyingQuestionsEnabled) {
-      queryToProcess += " Ask me clarifying question until you are 98% confident you can complete the task successfully.";
-      console.log('Clarifying questions enabled - appended prompt to query:', queryToProcess);
-    }
-
-    const currentQuery = input; // Store original query for tool generation
     setMessages(prev => [...prev, userMessage]);
-    setInput('');
+    setInput("");
     setIsLoading(true);
 
-    // If this is the first message, detect intent and update the AI's opening message
-    if (messages.length === 0) {
-      const detectedIntent = detectUserIntent(currentQuery);
-      const appropriateTurn = getFirstChatTurn(detectedIntent);
-      
-      // Add the personalized first turn message
-      const firstTurnMessage: Message = {
-        id: `ai-first-${Date.now()}`,
-        type: 'assistant',
-        content: appropriateTurn.message + (appropriateTurn.followUp ? `\n\n${appropriateTurn.followUp}` : ''),
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, firstTurnMessage]);
-      
-      // Small delay before the main response
-      await new Promise(resolve => setTimeout(resolve, 800));
-    }
-
-    try {
-      // Use AI discovery service with the modified query
-      const discoveryResult = await parseQuery(queryToProcess, {}, 'stacks');
-      console.log('AI Discovery result:', discoveryResult);
-
-      // Simulate streaming for better UX
-      const streamingMessage: Message = {
-        id: `ai-${Date.now()}`,
-        type: 'assistant',
-        content: 'Great — here\'s a stack I recommend for that. This includes the best mix of tools and prompts used by top teams for this exact job...',
+    // Simulate AI response
+    setTimeout(() => {
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "I'll help you build the perfect AI stack for your needs. Let me analyze your requirements and suggest some options...",
+        role: 'assistant',
         timestamp: new Date(),
-        streaming: true
+        stacks: [
+          {
+            id: 1,
+            name: "Email Automation Stack",
+            description: "Automate personalized outbound emails",
+            tools: ["OpenAI GPT-4", "Zapier", "HubSpot"],
+            category: "Marketing"
+          }
+        ]
       };
-
-      setMessages(prev => [...prev, streamingMessage]);
-
-      // Simulate streaming delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Generate tools based on original query (not modified) for consistency
-      const tools = generateMockTools(currentQuery);
-      
-      const finalMessage: Message = {
-        ...streamingMessage,
-        content: `Great — here's a stack I recommend for that. This includes the best mix of tools and prompts used by top teams for this exact job. You can deploy it as-is or customize it to fit your workflow.`,
-        tools,
-        streaming: false
-      };
-
-      setMessages(prev => prev.map(msg => 
-        msg.id === streamingMessage.id ? finalMessage : msg
-      ));
-
-    } catch (error) {
-      console.error('Error in AI discovery:', error);
-      
-      // Fallback to original behavior if AI discovery fails
-      const streamingMessage: Message = {
-        id: `ai-${Date.now()}`,
-        type: 'assistant',
-        content: 'Great — here\'s a stack I recommend for that. This includes the best mix of tools and prompts used by top teams for this exact job...',
-        timestamp: new Date(),
-        streaming: true
-      };
-
-      setMessages(prev => [...prev, streamingMessage]);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      const tools = generateMockTools(currentQuery);
-      
-      const finalMessage: Message = {
-        ...streamingMessage,
-        content: `Great — here's a stack I recommend for that. This includes the best mix of tools and prompts used by top teams for this exact job. You can deploy it as-is or customize it to fit your workflow.`,
-        tools,
-        streaming: false
-      };
-
-      setMessages(prev => prev.map(msg => 
-        msg.id === streamingMessage.id ? finalMessage : msg
-      ));
-    }
-
-    setIsLoading(false);
+      setMessages(prev => [...prev, aiMessage]);
+      setIsLoading(false);
+    }, 1500);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  const handleDeployTool = (tool: Tool) => {
-    setSelectedTool(tool);
+  const handleDeploy = (stack: any) => {
+    setSelectedStack(stack);
     setDeployModalOpen(true);
   };
 
-  const handleSaveTool = (tool: Tool) => {
-    saveStack(tool);
-  };
+  const suggestedQueries = [
+    "Automate personalized outbound emails for my SaaS",
+    "Speed up QA process for my engineering team",
+    "Summarize customer support tickets weekly",
+    "Auto-generate blog posts from product updates"
+  ];
 
-  const handleDeploy = (tool: Tool, platform: string) => {
-    deployStack(tool, platform);
-  };
-
-  return (
-    <div className="flex h-full bg-background">
-      {/* Filters Sidebar */}
-      <FiltersSidebar 
-        isOpen={showFilters} 
-        onToggle={() => setShowFilters(!showFilters)}
-        filters={filters}
-        onFiltersChange={setFilters}
-      />
-
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="border-b p-4 flex items-center justify-between bg-card/50 backdrop-blur-sm">
-          <div className="flex items-center space-x-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="lg:hidden"
-            >
-              <Menu className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="font-semibold text-lg">OgenticAI</h1>
-              <p className="text-sm text-muted-foreground">Your AI agent for building perfect stacks</p>
+  if (!hasMessages) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center px-4 bg-background">
+        <div className="w-full max-w-2xl mx-auto">
+          {/* Logo */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-8"
+          >
+            <div className="flex items-center justify-center space-x-3 mb-2">
+              <Sparkles className="h-12 w-12 text-primary" />
+              <h1 className="text-5xl font-light text-foreground">Ogentic</h1>
             </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="hidden lg:flex items-center space-x-2"
-            >
-              <Filter className="h-4 w-4" />
-              <span>Filters</span>
-            </Button>
-          </div>
-        </div>
+            <p className="text-lg text-muted-foreground font-light">
+              AI Stack Discovery
+            </p>
+          </motion.div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          <AnimatePresence>
-            {messages.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center py-12"
-              >
-                <h2 className="text-2xl font-bold mb-4 text-gradient">
-                  {firstChatTurn || "Hey! I can help you build the perfect AI stack"}
-                </h2>
-                <p className="text-muted-foreground mb-8 max-w-2xl mx-auto whitespace-pre-line">
-                  {firstChatTurn || "I can help you build a stack of AI tools, models, prompts, and agents that will actually drive results — not just look good in a list.\n\nWhat are you working on today? Describe the task or outcome you want — I'll find the best stack to make it happen."}
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                  {[
-                    "Automate personalized outbound emails for my SaaS",
-                    "Speed up QA process for my engineering team", 
-                    "Summarize customer support tickets weekly",
-                    "Draft onboarding emails for new users"
-                  ].map((example, index) => (
-                    <motion.button
-                      key={example}
-                      onClick={() => setInput(example)}
-                      className="p-3 text-sm text-left rounded-lg border hover:border-primary/50 transition-colors"
-                      whileHover={{ scale: 1.02 }}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      {example}
-                    </motion.button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {messages.map((message) => (
-            <ChatMessage 
-              key={message.id} 
-              message={message}
-              onDeployTool={handleDeployTool}
-              onSaveTool={handleSaveTool}
-            />
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input Area */}
-        <div className="border-t p-4 bg-card/50 backdrop-blur-sm">
-          <div className="flex items-center space-x-2 max-w-4xl mx-auto">
-            <div className="flex-1 relative">
-              <Input
+          {/* Search Form */}
+          <motion.form
+            onSubmit={handleSubmit}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mb-8"
+          >
+            <div className="relative group">
+              <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask me about AI tools or stacks for your next project..."
-                className="pr-12 rounded-xl"
-                disabled={isLoading}
+                placeholder="Describe your automation needs..."
+                className="w-full min-h-[56px] px-6 py-4 text-base border-2 border-border rounded-full resize-none focus:border-primary focus:ring-0 shadow-sm hover:shadow-md transition-all duration-200 bg-background"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
               />
               <Button
-                onClick={handleSend}
+                type="submit"
                 disabled={!input.trim() || isLoading}
-                className="absolute right-1 top-1 h-8 w-8 rounded-lg"
-                size="sm"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-10 w-10 rounded-full p-0 shadow-none"
+                variant="ghost"
               >
                 <Send className="h-4 w-4" />
               </Button>
             </div>
-          </div>
-          {clarifyingQuestionsEnabled && (
-            <p className="text-xs text-muted-foreground mt-2 text-center">
-              Clarifying questions enabled - AI will ask for details to better understand your needs
+          </motion.form>
+
+          {/* Action Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="flex justify-center space-x-4 mb-8"
+          >
+            <Button
+              variant="outline"
+              onClick={() => setInput("Find me the best AI tools for customer support")}
+              className="rounded-full px-6 py-2 border-border hover:border-primary transition-colors"
+            >
+              AI Stack Search
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setInput("I'm feeling lucky - surprise me with an AI stack")}
+              className="rounded-full px-6 py-2 border-border hover:border-primary transition-colors"
+            >
+              I'm Feeling Lucky
+            </Button>
+          </motion.div>
+
+          {/* Suggested Queries */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="space-y-3"
+          >
+            <p className="text-sm text-muted-foreground text-center mb-4">
+              Popular searches:
             </p>
-          )}
+            <div className="grid gap-2">
+              {suggestedQueries.map((query, index) => (
+                <button
+                  key={index}
+                  onClick={() => setInput(query)}
+                  className="text-sm text-primary hover:underline text-center py-1 transition-colors"
+                >
+                  {query}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  // Chat view when messages exist
+  return (
+    <div className="h-full flex flex-col bg-background">
+      {/* Header with mini logo */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3">
+        <div className="flex items-center space-x-2">
+          <Sparkles className="h-6 w-6 text-primary" />
+          <span className="text-xl font-light">Ogentic</span>
         </div>
       </div>
 
-      {/* Deploy Modal */}
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <AnimatePresence>
+            {messages.map((message) => (
+              <motion.div
+                key={message.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ChatMessage 
+                  message={message} 
+                  onDeploy={handleDeploy}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+          
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center space-x-2 text-muted-foreground"
+            >
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <span className="text-sm">Ogentic is thinking...</span>
+            </motion.div>
+          )}
+          
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* Input area */}
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border px-4 py-4">
+        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
+          <div className="relative">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask Ogentic anything..."
+              className="w-full min-h-[52px] px-4 py-3 pr-12 rounded-full border-border focus:border-primary resize-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
+            />
+            <Button
+              type="submit"
+              disabled={!input.trim() || isLoading}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full p-0"
+              variant="ghost"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        </form>
+      </div>
+
       <DeployModal
         isOpen={deployModalOpen}
         onClose={() => setDeployModalOpen(false)}
-        tool={selectedTool}
-        onDeploy={handleDeploy}
+        stack={selectedStack}
       />
     </div>
   );
