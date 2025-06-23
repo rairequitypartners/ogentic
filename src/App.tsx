@@ -16,6 +16,7 @@ import MyStacks from "./pages/MyStacks";
 import WelcomePage from "./pages/WelcomePage";
 import ConnectionsPage from "./pages/ConnectionsPage";
 import ConversationsPage from "./pages/ConversationsPage";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App: React.FC = () => {
                 <Route path="/stacks" element={<MyStacks />} />
                 <Route path="/connections" element={<ConnectionsPage />} />
                 <Route path="/conversations" element={<ConversationsPage />} />
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
