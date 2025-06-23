@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
@@ -70,7 +69,6 @@ export const useRealtimeStacks = (query?: string) => {
           filter: 'is_public=eq.true'
         },
         (payload) => {
-          console.log('New stack added:', payload);
           const newStackData = payload.new as Tables<'ai_stacks'>;
           const newStack: RealtimeStack = {
             ...newStackData,
@@ -94,7 +92,6 @@ export const useRealtimeStacks = (query?: string) => {
           filter: 'is_public=eq.true'
         },
         (payload) => {
-          console.log('Stack updated:', payload);
           const updatedStackData = payload.new as Tables<'ai_stacks'>;
           const updatedStack: RealtimeStack = {
             ...updatedStackData,
@@ -114,7 +111,6 @@ export const useRealtimeStacks = (query?: string) => {
           table: 'ai_stacks'
         },
         (payload) => {
-          console.log('Stack deleted:', payload);
           const deletedStackData = payload.old as Tables<'ai_stacks'>;
           setStacks(prev => prev.filter(stack => stack.id !== deletedStackData.id));
         }

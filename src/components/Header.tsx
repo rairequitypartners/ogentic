@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -9,16 +8,20 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Sparkles, User, LogOut, Plus, Settings } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Sparkles, User, LogOut, Plus, Settings, Info, Home, MessageSquare } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 interface HeaderProps {
   onStartFresh?: () => void;
+  showHomeButton?: boolean;
+  onGoHome?: () => void;
+  showNewStackButton?: boolean;
 }
 
-export const Header = ({ onStartFresh }: HeaderProps) => {
-  const { user, signOut } = useAuth();
+export const Header = ({ onStartFresh, showHomeButton, onGoHome, showNewStackButton = true }: HeaderProps) => {
+  const { user, signOut, isSupabaseConfigured } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = async () => {
     await signOut();
@@ -29,7 +32,7 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
     if (onStartFresh) {
       onStartFresh();
     } else {
-      navigate("/?fresh=true");
+      navigate("/welcome");
     }
   };
 
@@ -40,24 +43,47 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <button onClick={handleNewStack} className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+      <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link to="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
           <Sparkles className="h-6 w-6 text-primary" />
-          <span className="text-xl font-bold text-gradient">Ogentic</span>
-        </button>
+          <span className="text-xl font-bold text-gradient">ZingGPT</span>
+        </Link>
         
         <div className="flex items-center space-x-4">
-          <Button 
-            onClick={handleNewStack}
-            variant="outline" 
-            size="sm" 
-            className="hidden sm:flex"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Stack
-          </Button>
+          {showHomeButton && (
+             <Button 
+                onClick={onGoHome}
+                variant="outline" 
+                size="sm" 
+                className="hidden sm:flex"
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Home
+            </Button>
+          )}
+          {showNewStackButton && (
+            <Button 
+              onClick={handleNewStack}
+              variant="outline" 
+              size="sm" 
+              className="hidden sm:flex"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              New Conversation
+            </Button>
+          )}
 
-          {user ? (
+          {!isSupabaseConfigured ? (
+            <div className="flex items-center space-x-2">
+              <div className="hidden sm:flex items-center space-x-1 text-xs text-muted-foreground">
+                <Info className="h-3 w-3" />
+                <span>Demo Mode</span>
+              </div>
+              <Button variant="outline" size="sm" disabled>
+                Sign In
+              </Button>
+            </div>
+          ) : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -71,14 +97,24 @@ export const Header = ({ onStartFresh }: HeaderProps) => {
               <DropdownMenuContent className="w-56" align="end">
                 <DropdownMenuItem className="flex items-center">
                   <User className="mr-2 h-4 w-4" />
-                  <span>{user.email}</span>
+                  <span className="truncate">{user.email}</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="sm:hidden"
-                  onClick={handleNewStack}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  <span>New Stack</span>
+                {showNewStackButton && (
+                  <DropdownMenuItem 
+                    className="sm:hidden"
+                    onClick={handleNewStack}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    <span>New Conversation</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={() => navigate("/conversations")}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  <span>My Conversations</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/stacks")}>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  <span>My Stacks</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/settings")}>
                   <Settings className="mr-2 h-4 w-4" />

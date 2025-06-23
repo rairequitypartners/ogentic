@@ -1,109 +1,86 @@
+import { create } from 'zustand';
+import { supabase } from '@/integrations/supabase/client';
+import { Stack } from './useAutonomousAgent';
+import { useAuth } from './useAuth';
+import { useEffect } from 'react';
 
-import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
-
-interface Tool {
+export interface SavedStack {
   id: string;
-  name: string;
+  user_id: string;
+  created_at: string;
+  codename: string;
+  title: string;
   description: string;
-  useCase: string;
-  source: string;
-  type: string;
-  url?: string;
-  featured?: boolean;
-  reason?: string;
-  setupTime?: string;
+  stack_data: Stack;
+  deployment_status?: string;
+  is_public?: boolean;
+  deployed_at?: string;
+  deployment_url?: string;
 }
 
-interface SavedStack {
-  id: string;
-  tool: Tool;
-  savedAt: Date;
-  platform?: string;
+interface MyStacksState {
+  stacks: SavedStack[];
+  loading: boolean;
+  error: string | null;
+  fetchStacks: (userId: string) => Promise<void>;
+  addStack: (stack: Stack, userId: string) => Promise<SavedStack | null>;
 }
+
+const useMyStacksStore = create<MyStacksState>((set) => ({
+  stacks: [],
+  loading: false,
+  error: null,
+  fetchStacks: async (userId) => {
+    set({ loading: true, error: null });
+    try {
+      const { data, error } = await supabase
+        .from('saved_stacks')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      set({ stacks: data as unknown as SavedStack[], loading: false });
+    } catch (error: any) {
+      set({ error: error.message, loading: false });
+    }
+  },
+  addStack: async (stack, userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('saved_stacks')
+        .insert({
+          user_id: userId,
+          codename: stack.codename,
+          title: stack.title,
+          description: stack.description,
+          stack_data: stack as any,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      const newStack = data as unknown as SavedStack;
+      set((state) => ({ stacks: [newStack, ...state.stacks] }));
+      return newStack;
+    } catch (error: any) {
+      set({ error: error.message });
+      console.error("Error adding stack:", error);
+      return null;
+    }
+  },
+}));
 
 export const useMyStacks = () => {
-  const [savedStacks, setSavedStacks] = useState<SavedStack[]>([]);
-  const { toast } = useToast();
+    const store = useMyStacksStore();
+    const { user } = useAuth();
 
-  // Load saved stacks from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('ogentic-my-stacks');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setSavedStacks(parsed.map((stack: any) => ({
-          ...stack,
-          savedAt: new Date(stack.savedAt)
-        })));
-      }
-    } catch (error) {
-      console.error('Error loading saved stacks:', error);
-    }
-  }, []);
+    useEffect(() => {
+        if(user) {
+            store.fetchStacks(user.id);
+        }
+    }, [user]);
 
-  // Save to localStorage whenever savedStacks changes
-  useEffect(() => {
-    try {
-      localStorage.setItem('ogentic-my-stacks', JSON.stringify(savedStacks));
-    } catch (error) {
-      console.error('Error saving stacks:', error);
-    }
-  }, [savedStacks]);
-
-  const saveStack = (tool: Tool) => {
-    const existingIndex = savedStacks.findIndex(stack => stack.tool.id === tool.id);
-    
-    if (existingIndex >= 0) {
-      toast({
-        title: "Already saved",
-        description: `${tool.name} is already in your stacks.`,
-      });
-      return;
-    }
-
-    const newStack: SavedStack = {
-      id: `saved-${Date.now()}`,
-      tool,
-      savedAt: new Date()
-    };
-
-    setSavedStacks(prev => [newStack, ...prev]);
-    
-    toast({
-      title: "Stack saved!",
-      description: `${tool.name} has been added to your stacks.`,
-    });
-  };
-
-  const removeStack = (stackId: string) => {
-    setSavedStacks(prev => prev.filter(stack => stack.id !== stackId));
-    
-    toast({
-      title: "Stack removed",
-      description: "Stack has been removed from your collection.",
-    });
-  };
-
-  const deployStack = (tool: Tool, platform: string) => {
-    // Update existing saved stack with platform info
-    setSavedStacks(prev => prev.map(stack => 
-      stack.tool.id === tool.id 
-        ? { ...stack, platform }
-        : stack
-    ));
-
-    // Simulate deployment success
-    toast({
-      title: "Successfully deployed!",
-      description: `${tool.name} has been deployed to ${platform}.`,
-    });
-  };
-
-  return {
-    savedStacks,
-    saveStack,
-    removeStack,
-    deployStack
-  };
-};
+    return store;
+}

@@ -1,49 +1,23 @@
-
 import { useRef, useEffect } from "react";
-import { Send, Sparkles } from "lucide-react";
+import { Send, Bot, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "./ChatMessage";
 import { motion, AnimatePresence } from "framer-motion";
-
-interface Message {
-  id: string;
-  content: string;
-  role: 'user' | 'assistant';
-  timestamp: Date;
-  isLoading?: boolean;
-  tools?: any[];
-  stack?: {
-    title: string;
-    description: string;
-    components: Array<{
-      type: 'prompt' | 'tool' | 'model' | 'agent';
-      name: string;
-      description: string;
-      reason: string;
-      source?: string;
-      featured?: boolean;
-    }>;
-  };
-}
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from "@/components/ui/textarea";
+import { AgentResponse } from '@/hooks/useAutonomousAgent';
 
 interface ChatViewProps {
-  messages: Message[];
-  input: string;
-  onInputChange: (value: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  messages: AgentResponse[];
+  inputValue: string;
+  setInputValue: (value: string) => void;
+  onSendMessage: (input: string) => void;
   isLoading: boolean;
-  onDeployStack: (stack: any) => void;
+  error: string | null;
+  onShowStacks: (messageId: string) => void;
 }
 
-export const ChatView = ({ 
-  messages, 
-  input, 
-  onInputChange, 
-  onSubmit, 
-  isLoading, 
-  onDeployStack 
-}: ChatViewProps) => {
+export const ChatView = ({ messages, inputValue, setInputValue, onSendMessage, isLoading, error, onShowStacks }: ChatViewProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -52,21 +26,12 @@ export const ChatView = ({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading, error]);
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* Header with mini logo */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3">
-        <div className="flex items-center space-x-2">
-          <Sparkles className="h-6 w-6 text-primary" />
-          <span className="text-xl font-light">Ogentic</span>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="max-w-4xl mx-auto space-y-6">
+    <div className="flex flex-col h-full bg-background">
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-6">
           <AnimatePresence>
             {messages.map((message) => (
               <motion.div
@@ -78,54 +43,70 @@ export const ChatView = ({
               >
                 <ChatMessage 
                   message={message} 
-                  onDeployStack={onDeployStack}
+                  isLoading={false} // Individual message loading state can be added if needed
+                  onDeployStack={() => {}}
+                  onShowStacks={() => onShowStacks(message.id)}
                 />
               </motion.div>
             ))}
           </AnimatePresence>
           
-          {isLoading && (
+          {isLoading && !messages.some(m => m.role === 'assistant' && m.content === '') && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center space-x-2 text-muted-foreground"
+              className="flex items-center gap-3 text-muted-foreground"
             >
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              <span className="text-sm">Ogentic is thinking...</span>
+              <Bot className="w-6 h-6 text-primary animate-pulse" />
+              <p className="text-sm">ZingGPT is thinking...</p>
+            </motion.div>
+          )}
+
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 text-destructive bg-destructive/10 rounded-lg p-4"
+            >
+              <AlertTriangle className="w-6 h-6" />
+              <p className="text-sm font-medium">{error}</p>
             </motion.div>
           )}
           
           <div ref={messagesEndRef} />
         </div>
-      </div>
+      </ScrollArea>
 
-      {/* Input area */}
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border px-4 py-4">
-        <form onSubmit={onSubmit} className="max-w-4xl mx-auto">
-          <div className="relative">
-            <Textarea
-              value={input}
-              onChange={(e) => onInputChange(e.target.value)}
-              placeholder="Ask Ogentic anything..."
-              className="w-full min-h-[52px] px-4 py-3 pr-12 rounded-full border-border focus:border-primary resize-none"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  onSubmit(e);
-                }
-              }}
-            />
-            <Button
-              type="submit"
-              disabled={!input.trim() || isLoading}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full p-0"
-              variant="ghost"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
+      <div className="px-4 py-3 bg-background border-t">
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (inputValue.trim()) onSendMessage(inputValue);
+          }} 
+          className="relative"
+        >
+          <Textarea
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder={"Ask me to generate an AI stack..."}
+            className="w-full pr-12 resize-none min-h-[44px] max-h-[120px]"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (inputValue.trim()) onSendMessage(inputValue);
+              }
+            }}
+            rows={1}
+            disabled={isLoading}
+          />
+          <Button 
+            type="submit" 
+            size="icon" 
+            className="absolute right-2 top-1/2 -translate-y-1/2" 
+            disabled={isLoading || !inputValue.trim()}
+          >
+            <Send className="h-4 w-4" />
+          </Button>
         </form>
       </div>
     </div>

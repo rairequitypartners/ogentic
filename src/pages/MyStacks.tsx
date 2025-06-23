@@ -27,7 +27,8 @@ import {
   Copy,
   Facebook,
   Twitter,
-  Linkedin
+  Linkedin,
+  FolderOpen
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -37,13 +38,12 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import type { Tables } from "@/integrations/supabase/types";
+import { useMyStacks, SavedStack } from "@/hooks/useMyStacks";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Lazy load the recommendation components
 const RecommendedStacks = lazy(() => import("@/components/discovery/RecommendedStacks").then(m => ({ default: m.RecommendedStacks })));
 const StackResults = lazy(() => import("@/components/discovery/StackResults").then(m => ({ default: m.StackResults })));
-
-type AIStack = Tables<'ai_stacks'>;
 
 const StacksLoadingFallback = () => (
   <div className="space-y-4">
@@ -64,8 +64,7 @@ const StacksLoadingFallback = () => (
 export default function MyStacks() {
   const { user, loading: authLoading } = useAuth();
   const { isOnboardingCompleted, preferences, loading: preferencesLoading } = useUserPreferences();
-  const [stacks, setStacks] = useState<AIStack[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { stacks, loading, fetchStacks } = useMyStacks();
   const [expandedStack, setExpandedStack] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState("recent");
   const navigate = useNavigate();
@@ -74,50 +73,40 @@ export default function MyStacks() {
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
-      return;
-    }
-
-    if (user) {
-      fetchStacks();
     }
   }, [user, authLoading, navigate]);
 
-  const fetchStacks = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('ai_stacks')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setStacks(data || []);
-    } catch (error) {
-      console.error('Error fetching stacks:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const deleteStack = async (stackId: string) => {
+    if (!user) return;
     try {
       const { error } = await supabase
-        .from('ai_stacks')
+        .from('saved_stacks')
         .delete()
         .eq('id', stackId)
-        .eq('user_id', user?.id);
+        .eq('user_id', user.id);
 
       if (error) throw error;
       
-      setStacks(stacks.filter(stack => stack.id !== stackId));
+      fetchStacks(user.id);
+
+      toast({
+        title: "Stack deleted",
+        description: "The stack has been successfully deleted.",
+      });
+
     } catch (error) {
       console.error('Error deleting stack:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete the stack.",
+        variant: "destructive",
+      });
     }
   };
 
-  const getComponentCount = (components: any) => {
-    if (!components || !Array.isArray(components)) return 0;
-    return components.length;
+  const getComponentCount = (stackData: any) => {
+    if (!stackData || !Array.isArray(stackData.components)) return 0;
+    return stackData.components.length;
   };
 
   const getStatusColor = (status: string) => {
@@ -138,10 +127,14 @@ export default function MyStacks() {
   };
 
   const handleStartFresh = () => {
-    navigate("/?fresh=true");
+    navigate("/chat?new=true");
   };
 
-  const getSortedStacks = (stacksToSort: AIStack[]) => {
+  const handleDeploy = (stack: SavedStack) => {
+    navigate('/connections', { state: { stack } });
+  };
+
+  const getSortedStacks = (stacksToSort: SavedStack[]) => {
     switch (sortBy) {
       case 'recent':
         return [...stacksToSort].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -150,43 +143,43 @@ export default function MyStacks() {
       case 'alphabetical':
         return [...stacksToSort].sort((a, b) => a.title.localeCompare(b.title));
       case 'components':
-        return [...stacksToSort].sort((a, b) => getComponentCount(b.components) - getComponentCount(a.components));
+        return [...stacksToSort].sort((a, b) => getComponentCount(b.stack_data) - getComponentCount(a.stack_data));
       default:
         return stacksToSort;
     }
   };
 
-  const generateShareableUrl = (stack: AIStack) => {
+  const generateShareableUrl = (stack: SavedStack) => {
     const baseUrl = window.location.origin;
     return `${baseUrl}/stack/${stack.id}`;
   };
 
-  const generateShareText = (stack: AIStack) => {
-    const componentCount = getComponentCount(stack.components);
+  const generateShareText = (stack: SavedStack) => {
+    const componentCount = getComponentCount(stack.stack_data);
     return `🚀 Check out this AI stack I built: "${stack.title}" - ${stack.description} (${componentCount} components)
 
-✨ Build your own AI automation stack in minutes with Ogentic AI! No coding required.
+✨ Build your own AI automation stack in minutes with ZingGPT! No coding required.
 👉 Try it free: ${window.location.origin}
 
-#OgentigAI #AIStack #Automation #NoCode #AITools`;
+#ZingGPT #AIStack #Automation #NoCode #AITools`;
   };
 
   const copyToClipboard = async (text: string) => {
     try {
-      const shareableUrl = generateShareableUrl({ id: 'sample' } as AIStack);
+      const shareableUrl = generateShareableUrl({ id: 'sample' } as SavedStack);
       const promotionalText = `🚀 Discover powerful AI automation stacks!
 
-✨ Build your own AI stack in minutes with Ogentic AI - No coding required!
+✨ Build your own AI stack in minutes with ZingGPT - No coding required!
 👉 Try it free: ${window.location.origin}
 
 ${text}
 
-#OgentigAI #AIStack #Automation #NoCode`;
+#ZingGPT #AIStack #Automation #NoCode`;
       
       await navigator.clipboard.writeText(promotionalText);
       toast({
         title: "Copied to clipboard",
-        description: "Share link with Ogentic AI promotion has been copied to your clipboard."
+        description: "Share link with ZingGPT promotion has been copied to your clipboard."
       });
     } catch (error) {
       toast({
@@ -197,7 +190,7 @@ ${text}
     }
   };
 
-  const shareToSocial = (platform: string, stack: AIStack) => {
+  const shareToSocial = (platform: string, stack: SavedStack) => {
     const url = generateShareableUrl(stack);
     const text = generateShareText(stack);
     
@@ -210,7 +203,7 @@ ${text}
       case 'facebook':
         const fbText = `🚀 Check out this AI stack: "${stack.title}" - ${stack.description}
 
-Build your own AI automation stack with Ogentic AI!`;
+Build your own AI automation stack with ZingGPT!`;
         shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(fbText)}`;
         break;
       case 'linkedin':
@@ -218,7 +211,7 @@ Build your own AI automation stack with Ogentic AI!`;
 
 ${stack.description}
 
-Built with Ogentic AI - the easiest way to create AI automation stacks without coding. Try it free!`;
+Built with ZingGPT - the easiest way to create AI automation stacks without coding. Try it free!`;
         shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&summary=${encodeURIComponent(linkedinText)}`;
         break;
       default:
@@ -228,8 +221,15 @@ Built with Ogentic AI - the easiest way to create AI automation stacks without c
     window.open(shareUrl, '_blank', 'width=600,height=400');
   };
 
-  if (authLoading || !user) {
-    return <div className="min-h-screen bg-background" />;
+  if (authLoading || loading || !user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header onStartFresh={handleStartFresh} />
+        <div className="container mx-auto px-4 py-8">
+          <StacksLoadingFallback />
+        </div>
+      </div>
+    );
   }
 
   const sortedStacks = getSortedStacks(stacks);
@@ -270,14 +270,26 @@ Built with Ogentic AI - the easiest way to create AI automation stacks without c
           </Alert>
         )}
 
-        <div className="space-y-8">
-          {/* My Saved Stacks Section */}
-          <div>
-            <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-              <Folder className="h-6 w-6" />
-              My Saved Stacks
-            </h2>
-            
+        <Tabs defaultValue="my-stacks" className="w-full">
+          <div className="flex justify-center">
+            <TabsList>
+              <TabsTrigger value="my-stacks">
+                <Folder className="mr-2 h-4 w-4" />
+                My Saved Stacks
+              </TabsTrigger>
+              <TabsTrigger value="complete-stacks">
+                <Layers className="mr-2 h-4 w-4" />
+                Complete Stacks
+              </TabsTrigger>
+              <TabsTrigger value="ai-recommended">
+                <Star className="mr-2 h-4 w-4" />
+                AI Recommended
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          
+          <TabsContent value="my-stacks" className="mt-6">
+            {/* My Saved Stacks Section */}
             {loading ? (
               <div className="grid grid-cols-1 gap-6">
                 {[...Array(3)].map((_, i) => (
@@ -293,14 +305,19 @@ Built with Ogentic AI - the easiest way to create AI automation stacks without c
                 ))}
               </div>
             ) : stacks.length === 0 ? (
-              <div className="text-center py-16">
-                <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No stacks saved yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  Start by searching for an AI stack and saving it to your collection.
+              <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg bg-background">
+                <div className="mb-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                    <FolderOpen className="w-8 h-8 text-primary" />
+                  </div>
+                </div>
+                <h2 className="text-xl font-semibold mb-2">No Saved Stacks Yet</h2>
+                <p className="text-muted-foreground mb-4 max-w-md">
+                  It looks like you haven't saved any AI stacks. Start by exploring recommendations or creating a new stack.
                 </p>
-                <Button onClick={handleStartFresh} className="button-glow">
-                  Discover AI Stacks
+                <Button onClick={handleStartFresh}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Get AI Recommendations
                 </Button>
               </div>
             ) : (
@@ -380,13 +397,28 @@ Built with Ogentic AI - the easiest way to create AI automation stacks without c
                           >
                             <Play className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteStack(stack.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <Settings className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => alert("Manage components for " + stack.title)}>
+                                <Layers className="mr-2 h-4 w-4" />
+                                Manage Components
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => alert("Pause deployment for " + stack.title)}>
+                                <Play className="mr-2 h-4 w-4" />
+                                {stack.deployment_status === 'deployed' ? 'Pause' : 'Resume'}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => deleteStack(stack.id)} className="text-red-500">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     </CardHeader>
@@ -397,7 +429,7 @@ Built with Ogentic AI - the easiest way to create AI automation stacks without c
                           <div className="flex items-center justify-between">
                             <span className="text-muted-foreground">Components:</span>
                             <Badge variant="secondary">
-                              {getComponentCount(stack.components)} items
+                              {getComponentCount(stack.stack_data)} items
                             </Badge>
                           </div>
                           <div className="flex items-center justify-between">
@@ -423,10 +455,10 @@ Built with Ogentic AI - the easiest way to create AI automation stacks without c
                               stackId={stack.id}
                               title={stack.title}
                               deploymentStatus={stack.deployment_status || 'draft'}
-                              isPublic={stack.is_public}
+                              isPublic={stack.is_public || false}
                               deployedAt={stack.deployed_at || undefined}
                               deploymentUrl={stack.deployment_url || undefined}
-                              onStatusChange={fetchStacks}
+                              onStatusChange={() => fetchStacks(user.id)}
                             />
                           </div>
                         )}
@@ -436,14 +468,10 @@ Built with Ogentic AI - the easiest way to create AI automation stacks without c
                 ))}
               </div>
             )}
-          </div>
+          </TabsContent>
 
-          {/* Complete Stacks Section */}
-          <div>
-            <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-              <Layers className="h-6 w-6" />
-              Complete Stacks
-            </h2>
+          <TabsContent value="complete-stacks" className="mt-6">
+            {/* Complete Stacks Section */}
             <Suspense fallback={<StacksLoadingFallback />}>
               <StackResults 
                 searchQuery=""
@@ -451,22 +479,18 @@ Built with Ogentic AI - the easiest way to create AI automation stacks without c
                 userPreferences={preferences}
               />
             </Suspense>
-          </div>
+          </TabsContent>
 
-          {/* AI Recommended Section */}
-          <div>
-            <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-              <Star className="h-6 w-6" />
-              AI Recommended
-            </h2>
+          <TabsContent value="ai-recommended" className="mt-6">
+            {/* AI Recommended Section */}
             <Suspense fallback={<StacksLoadingFallback />}>
               <RecommendedStacks 
                 userPreferences={preferences}
                 searchQuery=""
               />
             </Suspense>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

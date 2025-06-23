@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -46,6 +45,7 @@ interface UseAIDiscoveryResult {
 export const useAIDiscovery = (): UseAIDiscoveryResult => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(10);
 
   const parseQuery = async (
     query: string, 
@@ -55,15 +55,10 @@ export const useAIDiscovery = (): UseAIDiscoveryResult => {
   ): Promise<ParsedQuery> => {
     setLoading(true);
     setError(null);
-
-    console.log('AI Discovery called with:', { 
-      query, 
-      userPreferences, 
-      context, 
-      clarifyingEnabled 
-    });
+    setProgress(10);
 
     try {
+      setProgress(50);
       const { data, error: functionError } = await supabase.functions.invoke('ai-discovery', {
         body: { 
           query, 
@@ -84,7 +79,8 @@ export const useAIDiscovery = (): UseAIDiscoveryResult => {
         return data.fallback;
       }
 
-      console.log('AI Discovery successful response:', data);
+      setLoading(false);
+      setProgress(100);
       return data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to parse query';
@@ -99,8 +95,6 @@ export const useAIDiscovery = (): UseAIDiscoveryResult => {
         suggestions: ['Try being more specific', 'Mention your industry or use case'],
         generatedStacks: []
       };
-    } finally {
-      setLoading(false);
     }
   };
 

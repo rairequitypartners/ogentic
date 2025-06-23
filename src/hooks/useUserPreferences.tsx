@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,12 +23,16 @@ export const useUserPreferences = () => {
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
       fetchPreferences();
     } else {
+      // Reset state when user is not authenticated
+      setPreferences(null);
       setLoading(false);
+      setError(null);
     }
   }, [user]);
 
@@ -37,6 +40,9 @@ export const useUserPreferences = () => {
     if (!user) return;
 
     try {
+      setLoading(true);
+      setError(null);
+
       const { data, error } = await supabase
         .from('user_preferences')
         .select('*')
@@ -47,9 +53,49 @@ export const useUserPreferences = () => {
         throw error;
       }
 
-      setPreferences(data);
-    } catch (error) {
-      console.error('Error fetching preferences:', error);
+      if (!data) {
+        // Create default preferences if none exist
+        const defaultPreferences = {
+          user_id: user.id,
+          industry: 'technology',
+          output_tone: 'professional',
+          preferred_models: ['gpt-4', 'claude-3'],
+          bias_preference: 'balanced',
+          dataset_preference: 'curated',
+          ux_complexity: 'intermediate',
+          use_cases: ['general'],
+          experience_level: 'intermediate',
+          onboarding_completed: false
+        };
+
+        const { data: newPrefs, error: insertError } = await supabase
+          .from('user_preferences')
+          .insert(defaultPreferences)
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        setPreferences(newPrefs);
+      } else {
+        setPreferences(data);
+      }
+    } catch (err) {
+      console.error('Error fetching preferences:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load preferences');
+      
+      // Set default preferences in memory if we can't load from database
+      setPreferences({
+        user_id: user.id,
+        industry: 'technology',
+        output_tone: 'professional',
+        preferred_models: ['gpt-4', 'claude-3'],
+        bias_preference: 'balanced',
+        dataset_preference: 'curated',
+        ux_complexity: 'intermediate',
+        use_cases: ['general'],
+        experience_level: 'intermediate',
+        onboarding_completed: false
+      } as UserPreferences);
     } finally {
       setLoading(false);
     }
@@ -66,6 +112,8 @@ export const useUserPreferences = () => {
     }
 
     setSaving(true);
+    setError(null);
+
     try {
       // First, check if preferences already exist
       const { data: existingPrefs } = await supabase
@@ -130,6 +178,8 @@ export const useUserPreferences = () => {
       return true;
     } catch (error) {
       console.error('Error saving preferences:', error);
+      setError(error instanceof Error ? error.message : 'Failed to save preferences');
+      
       toast({
         title: "Error saving preferences",
         description: "Please try again.",
@@ -149,6 +199,7 @@ export const useUserPreferences = () => {
     preferences,
     loading,
     saving,
+    error,
     saveOnboardingData,
     isOnboardingCompleted,
     fetchPreferences

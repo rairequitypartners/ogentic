@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
@@ -130,7 +129,7 @@ export default function Onboarding() {
             <Sparkles className="h-8 w-8 text-primary" />
           </div>
           <CardTitle className="text-2xl text-gradient">
-            Welcome to Ogentic
+            Welcome to ZingGPT
           </CardTitle>
           <p className="text-muted-foreground">
             Let's personalize your AI experience

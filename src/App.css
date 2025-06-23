@@ -40,3 +40,11 @@
 .read-the-docs {
   color: #888;
 }
+
+.user-bubble {
+    @apply bg-primary text-primary-foreground rounded-lg p-3;
+}
+
+.assistant-bubble {
+    @apply bg-muted rounded-lg p-3;
+}

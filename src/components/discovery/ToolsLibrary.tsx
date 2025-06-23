@@ -203,6 +203,7 @@ export const ToolsLibrary = ({ searchQuery, filters }: ToolsLibraryProps) => {
   const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'rating' | 'downloads' | 'name'>('rating');
   const [progressStatus, setProgressStatus] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   // Memoized filter function
   const applyFilters = useCallback((toolsToFilter: Tool[]) => {
@@ -259,7 +260,7 @@ export const ToolsLibrary = ({ searchQuery, filters }: ToolsLibraryProps) => {
       }
 
       setLoading(true);
-      
+      setError(null);
       try {
         // Progress status updates
         setProgressStatus('🧠 Analyzing your request...');

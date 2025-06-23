@@ -1,3 +1,4 @@
+import { AgentResponse, AgentRecommendation } from '@/hooks/useAutonomousAgent';
 
 interface StackRecommendation {
   category: string;
@@ -80,4 +81,19 @@ export const getStackRecommendation = (query: string, toolIndex: number = 0): st
 export const getRecommendationCategory = (query: string): string => {
   const category = detectQueryCategory(query);
   return stackRecommendations[category].category;
+};
+
+export const generateContextualRecommendations = (query: string, context: string, history: AgentResponse[]): AgentRecommendation[] => {
+  const recommendations: AgentRecommendation[] = [];
+  
+  // ... existing code ...
+  return recommendations;
+};
+
+export const generateFallbackResponse = (query: string, context: string): string => {
+  const queryLower = query.toLowerCase();
+  
+  // Simple keyword-based responses for testing
+  // ... existing code ...
+  return "That's an interesting question about AI! I'm here to help you discover and implement AI solutions. Could you tell me a bit more about what you're trying to achieve? I'd love to provide some specific recommendations!";
 };

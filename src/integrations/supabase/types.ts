@@ -54,6 +54,30 @@ export type Database = {
         }
         Relationships: []
       }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       deployments: {
         Row: {
           deployed_at: string
@@ -92,6 +116,50 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string | null
+          id: string
+          raw: string | null
+          role: string
+          stack: Json | null
+          timestamp: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          conversation_id?: string | null
+          id?: string
+          raw?: string | null
+          role: string
+          stack?: Json | null
+          timestamp?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          conversation_id?: string | null
+          id?: string
+          raw?: string | null
+          role?: string
+          stack?: Json | null
+          timestamp?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -119,6 +187,45 @@ export type Database = {
           id?: string
           onboarding_completed?: boolean | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      saved_stacks: {
+        Row: {
+          codename: string
+          created_at: string
+          deployed_at: string | null
+          deployment_status: string | null
+          description: string
+          id: string
+          is_public: boolean | null
+          stack_data: Json
+          title: string
+          user_id: string
+        }
+        Insert: {
+          codename: string
+          created_at?: string
+          deployed_at?: string | null
+          deployment_status?: string | null
+          description: string
+          id?: string
+          is_public?: boolean | null
+          stack_data: Json
+          title: string
+          user_id: string
+        }
+        Update: {
+          codename?: string
+          created_at?: string
+          deployed_at?: string | null
+          deployment_status?: string | null
+          description?: string
+          id?: string
+          is_public?: boolean | null
+          stack_data?: Json
+          title?: string
+          user_id?: string
         }
         Relationships: []
       }

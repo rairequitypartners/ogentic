@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -213,7 +212,11 @@ const StackCard = React.memo(({ stack, index }: { stack: GeneratedStack; index: 
 
 StackCard.displayName = 'StackCard';
 
-export const StackResults = ({ searchQuery, filters, userPreferences }: StackResultsProps) => {
+export const StackResults = ({ 
+  searchQuery = '', 
+  filters = { types: [], sources: [], complexity: [], industries: [] }, 
+  userPreferences = {} 
+}: StackResultsProps) => {
   const [aiStacks, setAiStacks] = useState<GeneratedStack[]>([]);
   const [displayedStacks, setDisplayedStacks] = useState<GeneratedStack[]>([]);
   const [loading, setLoading] = useState(false);
