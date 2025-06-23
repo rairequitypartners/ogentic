@@ -70,8 +70,25 @@ export const ChatMessage = ({ message, isLoading, onDeployStack, onShowStacks }:
       </div>
       {showRaw && message.raw && (
         <div className="w-full max-w-2xl ml-11 mt-2">
-          <pre className="bg-gray-800 text-white p-4 rounded-lg text-xs overflow-x-auto">
-            <code>{message.raw}</code>
+          <pre className="bg-gray-800 text-white p-4 rounded-lg text-xs overflow-y-auto whitespace-pre-wrap break-words max-h-96">
+            <code>{(() => {
+              function unescapeString(str: string) {
+                // Replace common escape sequences
+                return str
+                  .replace(/\\n/g, '\n')
+                  .replace(/\\r/g, '\r')
+                  .replace(/\\t/g, '\t')
+                  .replace(/\\"/g, '"')
+                  .replace(/\\'/g, "'")
+                  .replace(/\\\\/g, '\\');
+              }
+              try {
+                const parsed = JSON.parse(message.raw);
+                return unescapeString(JSON.stringify(parsed, null, 2));
+              } catch {
+                return unescapeString(message.raw);
+              }
+            })()}</code>
           </pre>
         </div>
       )}

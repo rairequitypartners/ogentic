@@ -61,7 +61,12 @@ export const StackDetails: React.FC<StackDetailsProps> = ({
 
       {/* Stack Info */}
       <div className="p-4 border-b border-border">
-        <h4 className="font-medium text-lg mb-2">{selectedStack.title}</h4>
+        <h4 className="font-medium text-lg mb-2 flex items-center">
+          {selectedStack.title}
+          {selectedStack.ai_stack && selectedStack.ai_stack.every(comp => ['model', 'agent', 'prompt'].includes(comp.type)) && (
+            <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-900 text-white">AI Components Only</span>
+          )}
+        </h4>
         <p className="text-sm text-muted-foreground mb-3">{selectedStack.description}</p>
         <div className="flex items-center space-x-2">
           <Badge variant="secondary">{selectedStack.use_case}</Badge>

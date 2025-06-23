@@ -79,37 +79,47 @@ export const StackSidebar = ({ stacks, isLoading, onClose, onSelectStack }: Stac
       
       <ScrollArea className="flex-1">
         <Accordion type="single" collapsible className="w-full">
-          {stacks.map((stack, index) => (
-            <AccordionItem value={`item-${index}`} key={index}>
-              <AccordionTrigger className="px-4 hover:no-underline">
-                <div className="flex justify-between items-center w-full">
-                  <div className="text-left">
-                    <p className="font-semibold">{stack.title}</p>
-                    <p className="text-sm text-muted-foreground font-mono">{stack.codename}</p>
+          {stacks.map((stack, index) => {
+            const isStrictlyAI = stack.ai_stack.every(
+              comp => ['model', 'agent', 'prompt'].includes(comp.type)
+            );
+            return (
+              <AccordionItem value={`item-${index}`} key={index}>
+                <AccordionTrigger className="px-4 hover:no-underline">
+                  <div className="flex justify-between items-center w-full">
+                    <div className="text-left">
+                      <p className="font-semibold flex items-center">
+                        {stack.title}
+                        {isStrictlyAI && (
+                          <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-900 text-white">AI Components Only</span>
+                        )}
+                      </p>
+                      <p className="text-sm text-muted-foreground font-mono">{stack.codename}</p>
+                    </div>
+                    <div className="flex items-center space-x-1 pr-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleViewDetails(e, stack)}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleSaveStack(e, stack)} disabled={savedStates[stack.codename]}>
+                        {savedStates[stack.codename] ? <Check className="w-4 h-4 text-green-500" /> : <Save className="w-4 h-4" />}
+                      </Button>
+                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleDeployStack(e, stack)}>
+                        <Rocket className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-1 pr-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleViewDetails(e, stack)}>
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleSaveStack(e, stack)} disabled={savedStates[stack.codename]}>
-                      {savedStates[stack.codename] ? <Check className="w-4 h-4 text-green-500" /> : <Save className="w-4 h-4" />}
-                    </Button>
-                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleDeployStack(e, stack)}>
-                      <Rocket className="w-4 h-4" />
-                    </Button>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <p className="text-sm text-muted-foreground mb-4">{stack.description}</p>
+                  <div className="space-y-1">
+                    {stack.ai_stack.map((component, compIndex) => (
+                      <ComponentListItem key={compIndex} component={component} />
+                    ))}
                   </div>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4">
-                <p className="text-sm text-muted-foreground mb-4">{stack.description}</p>
-                <div className="space-y-1">
-                  {stack.ai_stack.map((component, compIndex) => (
-                    <ComponentListItem key={compIndex} component={component} />
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
         </Accordion>
       </ScrollArea>
     </motion.div>

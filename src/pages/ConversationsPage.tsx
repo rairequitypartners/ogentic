@@ -1,17 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useConversations } from '@/hooks/useConversations';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate, Link } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Plus, ArrowRight } from 'lucide-react';
+import { MessageSquare, Plus, ArrowRight, Trash } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 const ConversationsPage = () => {
   const { user, loading: authLoading } = useAuth();
-  const { conversations, loading: conversationsLoading, fetchConversations } = useConversations();
+  const { conversations, loading: conversationsLoading, fetchConversations, deleteConversation } = useConversations();
   const navigate = useNavigate();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -22,6 +25,14 @@ const ConversationsPage = () => {
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!user) return;
+    await deleteConversation(id);
+    fetchConversations(user.id);
+    setDeleteId(null);
+    setConfirmOpen(false);
   };
 
   return (
@@ -65,7 +76,7 @@ const ConversationsPage = () => {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {conversations.map(convo => (
-              <Card key={convo.id} className="hover:shadow-lg transition-shadow">
+              <Card key={convo.id} className="hover:shadow-lg transition-shadow relative">
                 <CardHeader>
                   <CardTitle className="truncate text-lg">{convo.title}</CardTitle>
                 </CardHeader>
@@ -79,6 +90,26 @@ const ConversationsPage = () => {
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
+                  <button
+                    className="absolute bottom-3 right-3 p-2 rounded-full hover:bg-destructive/10"
+                    title="Delete conversation"
+                    onClick={() => { setDeleteId(convo.id); setConfirmOpen(true); }}
+                  >
+                    <Trash className="h-5 w-5 text-destructive" />
+                  </button>
+                  {deleteId === convo.id && (
+                    <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                      <DialogTrigger asChild><span /></DialogTrigger>
+                      <DialogContent>
+                        <h4 className="font-semibold mb-2">Delete Conversation</h4>
+                        <p>Are you sure you want to delete this conversation? This action cannot be undone.</p>
+                        <div className="flex justify-end space-x-2 mt-6">
+                          <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancel</Button>
+                          <Button variant="destructive" onClick={() => handleDelete(convo.id)}>Delete</Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
                 </CardContent>
               </Card>
             ))}

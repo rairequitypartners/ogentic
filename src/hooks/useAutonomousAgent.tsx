@@ -1,10 +1,11 @@
 import { create } from 'zustand';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { useAuth } from './useAuth';
 import { useConversations } from './useConversations';
 import { useUserPreferences } from './useUserPreferences';
+import { getClarificationQuestions } from './useClarificationAgent';
 
 // Interfaces are defined here to avoid circular dependencies
 export interface StackComponent {
@@ -13,6 +14,8 @@ export interface StackComponent {
   description: string;
   reason: string;
   requires_connection: boolean;
+  prompt?: string; // Optional prompt text for prompt components
+  link?: string; // Optional link to the component's official website or documentation
 }
 
 export interface Stack {
@@ -75,6 +78,8 @@ export const useAutonomousAgent = () => {
   const { addMessageToConversation, createConversation } = useConversations();
   const { preferences } = useUserPreferences();
 
+  const [pendingClarifications, setPendingClarifications] = useState<string[]>([]);
+
   const buildConversationalPrompt = useCallback((query: string, recentHistory: AgentResponse[]) => {
     const userPrefs = preferences || {
       industry: 'technology',
@@ -100,7 +105,13 @@ export const useAutonomousAgent = () => {
   Correction: I previously made an unverified claim. That was incorrect and should have been labeled.
 - Never override or alter my input unless asked.
 
-**If the user's request is ambiguous, incomplete, or lacks enough detail for a high-quality recommendation, do NOT provide recommendations yet. Instead, ask one or two specific clarifying questions to gather the necessary information before proceeding. These clarifying questions should focus on the user's AI needs, goals, or context (for example: what AI tasks, problems, or outcomes they are interested in).**
+**If the user's request is ambiguous, incomplete, or lacks enough detail for a high-quality recommendation, do NOT provide recommendations yet. Ask only ONE short, simple clarifying question at a time (focused on the user's AI needs, goals, or context). Wait for the user's answer before asking another question. Do NOT ask more than one question in a single response.**
+
+Example:
+User: I want to use AI in my business.
+Assistant: What do you want AI to help with in your business?
+User: I want to automate emails.
+Assistant: What kind of emails do you want to automate?
 
 You are ZingGPT, a friendly and brilliant AI solutions architect. Your primary goal is to help users solve real-world business problems by recommending and explaining stacks of AI tools and models.
 
@@ -110,9 +121,11 @@ You must follow these instructions precisely:
 3.  **Provide a JSON Output:** You MUST output your recommendation as a single, valid JSON array of stack objects within a \`<json_stacks>\` XML tag.
     - The JSON must be perfectly formatted, with no trailing commas or other syntax errors.
     - Each object in the top-level array is a complete stack.
-    - Each stack object must include: \`use_case\`, \`title\`, \`description\`, \`reason\` (a simple explanation for lay users why this stack is recommended, placed before the first component), \`codename\`, and an \`ai_stack\` array.
+    - Each stack object must include: \`use_case\`, \`title\`, \`description\`, \`reason\` (a simple explanation for lay users why this stack is recommended, placed before the first component), \`codename\`, an \`ai_stack\` array, and a \`map\` field for visualizing the stack.
+    - The \`map\` field should be an object with two arrays: \`nodes\` and \`edges\`. Each node should have: \`id\`, \`label\`, \`type\`, \`icon\` (URL or emoji if available), and a short \`description\`. Each edge should have: \`source\`, \`target\`, and optionally a \`label\`.
+    - Make the map clear and visually useful for React Flow, but not clumsy or overloaded with information.
     - Each codename should be descriptive and memorable (e.g., "content-automation-v1", "data-pipeline-pro", "customer-insights-stack").
-    - Each object in the \`ai_stack\` array represents a component and must include: \`name\` (string), \`type\` (one of 'tool', 'model', 'agent', 'prompt'), \`description\` (string), \`reason\` (string), and \`requires_connection\` (boolean).
+    - Each object in the \`ai_stack\` array represents a component and must include: \`name\` (string), \`type\` (one of 'tool', 'model', 'agent', 'prompt'), \`description\` (string), \`reason\` (string), \`requires_connection\` (boolean), and \`prompt\` (string if type is 'prompt').
 4.  **Explain the Key Steps:** After the JSON block, provide a clear, step-by-step guide on how the user can implement the recommended stacks. Use Markdown for formatting.
 5.  **Maintain a Conversational Tone:** Be helpful, encouraging, and ask clarifying questions if the user's request is ambiguous.
 6.  **Ask Clarifying Questions When Needed:** If the user's request is ambiguous, incomplete, or lacks enough detail for a high-quality recommendation, do NOT provide recommendations yet. Instead, ask one or two specific clarifying questions to gather the necessary information before proceeding.
@@ -122,27 +135,29 @@ Example of a good response:
 [
   {
     "use_case": "Automated Content Creation",
-    "title": "Creative Content Generation Stack",
-    "description": "A stack focused on generating high-quality creative text and images for marketing.",
-    "reason": "This stack helps you quickly create both text and images for your marketing needs, even if you have no technical background.",
-    "codename": "creative-content-v1",
+    "title": "Content Generation Stack",
+    "description": "A stack for generating high-quality text and images.",
+    "reason": "Uses proven, production-ready AI tools for content creation.",
+    "codename": "content-gen-v1",
     "ai_stack": [
       {
-        "name": "Claude 3 Sonnet",
+        "name": "OpenAI GPT-4",
         "type": "model",
-        "description": "Generates high-quality initial drafts of blog posts and articles.",
-        "reason": "Provides a great balance of speed, cost, and quality for content tasks.",
-        "requires_connection": true
+        "description": "Generates high-quality text content.",
+        "reason": "State-of-the-art language model.",
+        "requires_connection": true,
+        "link": "https://platform.openai.com/docs/models/gpt-4"
       },
       {
         "name": "Midjourney",
         "type": "tool",
-        "description": "Creates unique, high-resolution images and illustrations for the content.",
-        "reason": "Industry-leading image generation quality.",
-        "requires_connection": false
+        "description": "Creates unique images from text prompts.",
+        "reason": "Popular for AI-generated art.",
+        "requires_connection": true,
+        "link": "https://www.midjourney.com/"
       }
     ],
-    "connections": [["Claude 3 Sonnet", "Midjourney"]]
+    "connections": [["OpenAI GPT-4", "Midjourney"]]
   },
   {
     "use_case": "Data Analysis Pipeline",
@@ -284,7 +299,14 @@ Let me know if you'd like to dive deeper into any of these steps!`;
         if (convId && user) {
           await addMessageToConversation(convId, assistantMessage, user.id);
         }
-        
+
+        // Clarification agent integration
+        if (assistantMessage.role === 'assistant') {
+          const questions = await getClarificationQuestions(assistantMessage.content);
+          if (questions.length > 0) {
+            setPendingClarifications(questions);
+          }
+        }
       } catch (e: unknown) {
         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
         console.error('Error in sendMessage:', e);
@@ -311,6 +333,8 @@ Let me know if you'd like to dive deeper into any of these steps!`;
     sendMessage,
     setMessages,
     setCurrentConversationId,
+    pendingClarifications,
+    setPendingClarifications,
   };
 };
 

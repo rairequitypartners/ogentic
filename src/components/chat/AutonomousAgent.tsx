@@ -21,10 +21,16 @@ export const AutonomousAgent = forwardRef<AutonomousAgentHandle, AutonomousAgent
     error,
     sendMessage,
     currentConversationId,
+    pendingClarifications,
+    setPendingClarifications,
   } = useAutonomousAgent();
   
   const [inputValue, setInputValue] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
+  const [clarificationMode, setClarificationMode] = useState(false);
+
+  // Show the first pending clarification question if any
+  const currentClarification = pendingClarifications.length > 0 ? pendingClarifications[0] : null;
 
   const handleWelcomeQuery = async (query: string) => {
     if (!query.trim()) return;
@@ -35,7 +41,13 @@ export const AutonomousAgent = forwardRef<AutonomousAgentHandle, AutonomousAgent
     const query = input.trim();
     if (!query) return;
     setInputValue('');
-    sendMessage(query, currentConversationId || undefined);
+    if (currentClarification) {
+      // Answering a clarification question
+      await sendMessage(query, currentConversationId || undefined);
+      setPendingClarifications(pendingClarifications.slice(1));
+    } else {
+      sendMessage(query, currentConversationId || undefined);
+    }
   };
 
   const handleNewConversation = useCallback(() => {
@@ -54,7 +66,8 @@ export const AutonomousAgent = forwardRef<AutonomousAgentHandle, AutonomousAgent
     }
   }, [searchParams, setSearchParams, handleNewConversation]);
 
-  const showWelcome = messages.length === 0 && !isLoading;
+  // Only show the welcome screen if not in clarification mode
+  const showWelcome = messages.length === 0 && !isLoading && !currentClarification;
   if (showWelcome) {
     return <WelcomeScreen onQuerySubmit={handleWelcomeQuery} />;
   }
@@ -62,7 +75,19 @@ export const AutonomousAgent = forwardRef<AutonomousAgentHandle, AutonomousAgent
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       <ChatView
-        messages={messages}
+        messages={
+          currentClarification
+            ? [
+                ...messages,
+                {
+                  id: 'clarification',
+                  role: 'assistant',
+                  content: currentClarification,
+                  timestamp: new Date(),
+                },
+              ]
+            : messages
+        }
         isLoading={isLoading}
         error={error}
         onSendMessage={handleSubmit}
