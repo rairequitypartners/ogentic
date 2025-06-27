@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Stack } from '@/hooks/useAutonomousAgent';
 import { ComponentListItem } from './ComponentListItem';
+import { MindMap } from './MindMap';
 
 interface StackDetailsProps {
   selectedStack: Stack | null;
@@ -102,13 +103,19 @@ export const StackDetails: React.FC<StackDetailsProps> = ({
         </TabsContent>
 
         <TabsContent value="map" className="flex-1 p-4">
-          <div className="h-full bg-muted/20 rounded-lg border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
-            <div className="text-center text-muted-foreground">
-              <Map className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Map view coming soon</p>
-              <p className="text-sm">ReactFlow integration will be implemented here</p>
+          {selectedStack.map?.nodes && selectedStack.map?.edges ? (
+            <div className="h-full min-h-[400px] bg-muted/20 rounded-lg border-2 border-muted-foreground/20">
+              <MindMap nodes={selectedStack.map.nodes} edges={selectedStack.map.edges} />
             </div>
-          </div>
+          ) : (
+            <div className="h-full bg-muted/20 rounded-lg border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
+              <div className="text-center text-muted-foreground">
+                <Map className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Map view coming soon</p>
+                <p className="text-sm">ReactFlow integration will be implemented here</p>
+              </div>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

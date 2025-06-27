@@ -1,11 +1,12 @@
 import { useRef, useEffect } from "react";
-import { Send, Bot, Loader2, AlertTriangle } from "lucide-react";
+import { Send, Bot, Loader2, AlertTriangle, RefreshCw, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatMessage } from "./ChatMessage";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from "@/components/ui/textarea";
 import { AgentResponse } from '@/hooks/useAutonomousAgent';
+import { useAutonomousAgentStore } from '@/hooks/useAutonomousAgent';
 
 interface ChatViewProps {
   messages: AgentResponse[];
@@ -19,6 +20,8 @@ interface ChatViewProps {
 
 export const ChatView = ({ messages, inputValue, setInputValue, onSendMessage, isLoading, error, onShowStacks }: ChatViewProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const retryCount = useAutonomousAgentStore((state) => state.retryCount);
+  const currentModel = useAutonomousAgentStore((state) => state.currentModel);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -58,7 +61,19 @@ export const ChatView = ({ messages, inputValue, setInputValue, onSendMessage, i
               className="flex items-center gap-3 text-muted-foreground"
             >
               <Bot className="w-6 h-6 text-primary animate-pulse" />
-              <p className="text-sm">ZingGPT is thinking...</p>
+              <div className="flex flex-col">
+                <p className="text-sm">ZingGPT is thinking...</p>
+                {retryCount > 0 && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                    <span>Retry attempt {retryCount}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Zap className="w-3 h-3" />
+                  <span>Using {currentModel}</span>
+                </div>
+              </div>
             </motion.div>
           )}
 

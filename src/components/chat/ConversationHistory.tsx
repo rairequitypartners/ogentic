@@ -77,7 +77,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
         if (nextConversation) {
           onSelectConversation(nextConversation.id);
         } else {
-          onNewConversation();
+        onNewConversation();
         }
       }
     }
@@ -98,9 +98,9 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
             <History className="w-5 h-5 text-primary" />
             <h3 className="font-semibold">History</h3>
           </div>
-          <Button variant="ghost" size="sm" onClick={onNewConversation} className="w-8 h-8 p-0" title="New Conversation">
-            <Plus className="w-4 h-4" />
-          </Button>
+            <Button variant="ghost" size="sm" onClick={onNewConversation} className="w-8 h-8 p-0" title="New Conversation">
+              <Plus className="w-4 h-4" />
+            </Button>
         </div>
 
         {/* Conversation List */}

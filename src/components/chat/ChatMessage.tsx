@@ -16,8 +16,14 @@ interface ChatMessageProps {
 export const ChatMessage = ({ message, isLoading, onDeployStack, onShowStacks }: ChatMessageProps) => {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
-  const hasStacks = isAssistant && message.stacks && message.stacks.length > 0;
+  const hasStacks = message.stacks && message.stacks.length > 0;
   const [showRaw, setShowRaw] = useState(false);
+
+  // Clean content for display: remove any XML-like tags
+  let cleanContent = message.content.replace(/<\/?[a-z_]+>/gi, '').trim();
+  if (!cleanContent || cleanContent.length < 5) {
+    cleanContent = 'Here are your recommended stacks. See the sidebar for details.';
+  }
 
   return (
     <div className={`flex flex-col items-start gap-3 ${isUser ? 'items-end' : ''}`}>
@@ -35,7 +41,7 @@ export const ChatMessage = ({ message, isLoading, onDeployStack, onShowStacks }:
         >
           <div className="prose prose-sm dark:prose-invert max-w-none">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {message.content}
+              {cleanContent}
             </ReactMarkdown>
           </div>
           

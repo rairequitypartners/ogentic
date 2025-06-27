@@ -57,7 +57,18 @@ const getComponentIcon = (name: string, type: string) => {
   for (const key of Object.keys(componentIcons)) {
     if (lowerName.includes(key)) return componentIcons[key];
   }
-  return componentIcons[type] || componentIcons['tool'];
+  if (componentIcons[type]) return componentIcons[type];
+  return componentIcons['tool'];
+};
+
+export const getComponentIconRobust = (nameOrLabel: string, type: string) => {
+  if (!nameOrLabel) return componentIcons[type] || componentIcons['tool'];
+  const lower = nameOrLabel.toLowerCase();
+  for (const key of Object.keys(componentIcons)) {
+    if (lower.includes(key)) return componentIcons[key];
+  }
+  if (componentIcons[type]) return componentIcons[type];
+  return componentIcons['tool'];
 };
 
 const getComponentLink = (name: string) => {
@@ -67,6 +78,8 @@ const getComponentLink = (name: string) => {
   }
   return undefined;
 };
+
+export { getComponentIcon };
 
 export const ComponentListItem = ({ component }: { component: StackComponent }) => {
   const { icon: Icon, color } = getComponentIcon(component.name, component.type);

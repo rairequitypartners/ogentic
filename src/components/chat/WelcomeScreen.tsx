@@ -54,7 +54,7 @@ const defaultQueries = [
       icon: "BarChart",
       text: "Find an AI solution to analyze our sales data",
     },
-];
+  ];
 
 export const WelcomeScreen = ({ onQuerySubmit }: WelcomeScreenProps) => {
   const [inputValue, setInputValue] = useState('');
@@ -135,23 +135,23 @@ export const WelcomeScreen = ({ onQuerySubmit }: WelcomeScreenProps) => {
             </>
           ) : (
             suggestedQueries.map((query, i) => {
-              const Icon = iconComponents[query.icon];
-              return (
-                <button
-                  key={i}
+            const Icon = iconComponents[query.icon];
+            return (
+              <button
+                key={i}
                   onClick={() => {
                     console.log(`Suggestion clicked: "${query.text}"`);
                     onQuerySubmit(query.text);
                   }}
-                  className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors flex items-center justify-between group"
-                >
-                  <div className="flex items-center">
-                    <Icon className="h-5 w-5 mr-4 text-muted-foreground" />
-                    <span className="text-foreground/70 group-hover:text-foreground transition-colors">{query.text}</span>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                </button>
-              );
+                className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors flex items-center justify-between group"
+              >
+                <div className="flex items-center">
+                  <Icon className="h-5 w-5 mr-4 text-muted-foreground" />
+                  <span className="text-foreground/70 group-hover:text-foreground transition-colors">{query.text}</span>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+            );
             })
           )}
         </div>

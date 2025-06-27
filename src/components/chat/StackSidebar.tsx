@@ -94,6 +94,7 @@ export const StackSidebar = ({ stacks, isLoading, onClose, onSelectStack }: Stac
                           <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-900 text-white">AI Components Only</span>
                         )}
                       </p>
+                      <p className="text-xs italic text-muted-foreground mb-1">{stack.reason}</p>
                       <p className="text-sm text-muted-foreground font-mono">{stack.codename}</p>
                     </div>
                     <div className="flex items-center space-x-1 pr-2">

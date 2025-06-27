@@ -17,7 +17,7 @@ serve(async (req) => {
       );
     }
 
-    const { prompt } = await req.json();
+    const { prompt, model } = await req.json();
 
     if (!prompt) {
       return new Response(JSON.stringify({ error: 'Prompt is required.' }), {
@@ -25,6 +25,10 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Use provided model or fallback to default
+    const modelToUse = model || "claude-3-haiku-20240307";
+    console.log(`Using model: ${modelToUse}`);
 
     // This is the part that communicates with Anthropic's API
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -35,7 +39,7 @@ serve(async (req) => {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: "claude-3-haiku-20240307", // Or another model like claude-3-opus-20240229
+        model: modelToUse,
         max_tokens: 1024,
         messages: [{ role: "user", content: prompt }]
       }),

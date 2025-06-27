@@ -6,7 +6,8 @@ import { Stack } from '@/hooks/useAutonomousAgent';
 import CustomNode from './CustomNode';
 
 interface MindMapProps {
-  stack: Stack;
+  nodes: any[];
+  edges: any[];
 }
 
 const nodeTypes = {
@@ -47,29 +48,17 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[]) => {
   return { nodes, edges };
 };
 
-
-export const MindMap: React.FC<MindMapProps> = ({ stack }) => {
-
+export const MindMap: React.FC<MindMapProps> = ({ nodes, edges }) => {
   const { nodes: layoutedNodes, edges: layoutedEdges } = useMemo(() => {
-    const initialNodes: Node[] = stack.components.map((component) => ({
-      id: component.name,
+    // Ensure each node has type 'custom' for ReactFlow
+    const customNodes = nodes.map((node) => ({
+      ...node,
       type: 'custom',
-      data: { component },
-      position: { x: 0, y: 0 }, // Initial position, will be updated by layout
+      data: node, // Pass the node data directly
+      position: node.position || { x: 0, y: 0 },
     }));
-  
-    const initialEdges: Edge[] = stack.connections.map(([source, target], index) => ({
-      id: `e${index}-${source}-${target}`,
-      source,
-      target,
-      type: 'smoothstep',
-      animated: true,
-      style: { strokeWidth: 2, stroke: '#6b7280' },
-    }));
-
-    return getLayoutedElements(initialNodes, initialEdges);
-  }, [stack]);
-
+    return getLayoutedElements(customNodes, edges);
+  }, [nodes, edges]);
 
   return (
     <ReactFlow

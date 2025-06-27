@@ -41,14 +41,14 @@ const AutonomousAgentPage = () => {
     if (currentConversationId && !conversationsLoading && conversations.length > 0) {
       // Only load if we haven't already loaded this conversation
       if (loadedConversationId.current !== currentConversationId) {
-        const targetConversation = conversations.find(c => c.id === currentConversationId);
-        if (targetConversation) {
+      const targetConversation = conversations.find(c => c.id === currentConversationId);
+      if (targetConversation) {
           console.log('Loading conversation:', currentConversationId);
           loadedConversationId.current = currentConversationId;
-          setMessages(targetConversation.messages || []);
-          setCurrentConversationId(currentConversationId);
-        }
+        setMessages(targetConversation.messages || []);
+        setCurrentConversationId(currentConversationId);
       }
+    }
     }
   }, [currentConversationId, conversations, conversationsLoading, setMessages, setCurrentConversationId]);
 
@@ -76,15 +76,18 @@ const AutonomousAgentPage = () => {
   const prevMessagesLength = useRef(messages.length);
   useEffect(() => {
     if (messages.length > prevMessagesLength.current) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage?.role === 'assistant' && lastMessage.stacks && lastMessage.stacks.length > 0) {
-        setActiveStacksMessageId(lastMessage.id);
+      // Find the latest assistant message with stacks
+      const lastAssistantWithStacks = [...messages].reverse().find(
+        m => m.role === 'assistant' && m.stacks && m.stacks.length > 0
+      );
+      if (lastAssistantWithStacks) {
+        setActiveStacksMessageId(lastAssistantWithStacks.id);
         setShowRecommendations(true);
       }
     }
     prevMessagesLength.current = messages.length;
   }, [messages]);
-  
+
   const displayedStacks = useMemo(() => {
     console.log('displayedStacks calculation:');
     console.log('activeStacksMessageId:', activeStacksMessageId);
@@ -131,13 +134,13 @@ const AutonomousAgentPage = () => {
           
           {currentConversationId && (
             <ResizablePanel defaultSize={15} minSize={10} maxSize={20}>
-              <ConversationHistory
-                onNewConversation={handleNewChat}
+            <ConversationHistory
+              onNewConversation={handleNewChat}
                 onSelectConversation={(id) => navigate(`/chat/${id}`)}
-                currentConversationId={currentConversationId}
-              />
-            </ResizablePanel>
-          )}
+              currentConversationId={currentConversationId}
+            />
+          </ResizablePanel>
+        )}
 
           {currentConversationId && <ResizableHandle withHandle />}
 
@@ -173,11 +176,11 @@ const AutonomousAgentPage = () => {
                   selectedStack={selectedStack}
                   onClose={handleCloseStackDetails}
                 />
-              </ResizablePanel>
+        </ResizablePanel>
             </>
           )}
 
-        </ResizablePanelGroup>
+      </ResizablePanelGroup>
       </div>
     </div>
   );
