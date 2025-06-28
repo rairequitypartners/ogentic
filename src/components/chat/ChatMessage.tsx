@@ -19,6 +19,15 @@ export const ChatMessage = ({ message, isLoading, onDeployStack, onShowStacks }:
   const hasStacks = message.stacks && message.stacks.length > 0;
   const [showRaw, setShowRaw] = useState(false);
 
+  // Debug logging
+  console.log('ChatMessage render:', {
+    messageId: message.id,
+    role: message.role,
+    hasStacks,
+    stacksCount: message.stacks?.length,
+    hasRaw: !!message.raw
+  });
+
   // Clean content for display: remove any XML-like tags
   let cleanContent = message.content.replace(/<\/?[a-z_]+>/gi, '').trim();
   if (!cleanContent || cleanContent.length < 5) {
@@ -45,13 +54,15 @@ export const ChatMessage = ({ message, isLoading, onDeployStack, onShowStacks }:
             </ReactMarkdown>
           </div>
           
-          <div className="absolute bottom-1 right-1 flex items-center">
+          {/* Icons container - moved outside of prose to avoid conflicts */}
+          <div className="absolute -bottom-2 -right-2 flex items-center gap-1 bg-background rounded-full shadow-sm border p-1">
             {hasStacks && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted"
                 onClick={onShowStacks}
+                title="View Stacks"
               >
                 <Layers className="h-4 w-4" />
               </Button>
@@ -60,8 +71,9 @@ export const ChatMessage = ({ message, isLoading, onDeployStack, onShowStacks }:
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted"
                 onClick={() => setShowRaw(!showRaw)}
+                title="View Raw Response"
               >
                 <Info className="h-4 w-4" />
               </Button>

@@ -132,7 +132,7 @@ const AutonomousAgentPage = () => {
       <div className="flex-1 flex overflow-hidden">
         <ResizablePanelGroup direction="horizontal">
           
-          {currentConversationId && (
+          {(currentConversationId || messages.length > 0) && (
             <ResizablePanel defaultSize={15} minSize={10} maxSize={20}>
             <ConversationHistory
               onNewConversation={handleNewChat}
@@ -142,7 +142,7 @@ const AutonomousAgentPage = () => {
           </ResizablePanel>
         )}
 
-          {currentConversationId && <ResizableHandle withHandle />}
+          {(currentConversationId || messages.length > 0) && <ResizableHandle withHandle />}
 
           <ResizablePanel defaultSize={35} minSize={25}>
             <main className="flex-1 flex flex-col h-full">

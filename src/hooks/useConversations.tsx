@@ -8,6 +8,7 @@ import { User } from '@supabase/supabase-js';
 export interface Conversation {
   id: string;
   title: string;
+  department_id?: string;
   created_at: string;
   updated_at: string;
   messages: AgentResponse[];
@@ -37,6 +38,7 @@ const useConversationStore = create<ConversationState>((set, get) => ({
         .select(`
           id,
           title,
+          department_id,
           created_at,
           updated_at,
           messages (
@@ -159,6 +161,7 @@ const useConversationStore = create<ConversationState>((set, get) => ({
         .select(`
           id,
           title,
+          department_id,
           created_at,
           updated_at,
           messages (

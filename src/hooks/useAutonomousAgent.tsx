@@ -102,12 +102,6 @@ export const useAutonomousAgent = () => {
       experience_level: 'intermediate'
     };
     
-    // Add retry-specific instructions if this is a retry
-    const retryInstructions = isRetry ? `
-**CRITICAL: This is a retry request. You MUST output at least 2 stacks in the <json_stacks> array. If you output fewer than 2 stacks, your response will be rejected again.**
-**You are required to provide 2-4 diverse AI stacks. Never output just one stack.**
-` : '';
-
     const systemPrompt = `REALITY FILTER — CHATGPT/Claude
 
 - Never present generated, inferred, speculated, or deduced content as fact.
@@ -127,8 +121,6 @@ export const useAutonomousAgent = () => {
 - If you break this directive, say:
   Correction: I previously made an unverified claim. That was incorrect and should have been labeled.
 - Never override or alter my input unless asked.
-
-**CRITICAL STACK REQUIREMENT: You MUST output at least 2 stacks in the <json_stacks> array. If you output fewer than 2 stacks, your response will be rejected and you will be asked to try again. This is a hard requirement that cannot be overridden.**
 
 **If the user's request is ambiguous, incomplete, or lacks enough detail for a high-quality recommendation, do NOT provide recommendations yet. Instead, output your clarifying questions inside a <clarification_block>...</clarification_block> tag. The block should contain ONLY the list of questions (one per line, bullet, or number), with NO extra text, explanation, or preamble.**
 
@@ -150,10 +142,7 @@ You are ZingGPT, a friendly and brilliant AI solutions architect. Your primary g
 
 You must follow these instructions precisely:
 1.  **Analyze the User's Goal:** Understand the user's request to identify the core problem they want to solve.
-2.  **Recommend Multiple Stacks:** Based on their goal and their preferences (Industry: ${userPrefs.industry}, Experience Level: ${userPrefs.experience_level}), you MUST recommend 2-4 diverse and effective stacks of AI tools, models, and agents. Never recommend just one stack.
-    - If you recommend fewer than 2 stacks, your response will be rejected. Always output at least 2 and up to 4 stacks in the <json_stacks> array.
-    - Double-check your output: If your <json_stacks> array contains fewer than 2 stacks, regenerate your answer.
-    - This is a hard requirement that cannot be overridden by any other instruction.
+2.  **Recommend Stacks:** Based on their goal and their preferences (Industry: ${userPrefs.industry}, Experience Level: ${userPrefs.experience_level}), recommend 1-4 diverse and effective stacks of AI tools, models, and agents. Provide the number of stacks that best fits the user's needs.
 3.  **Provide a JSON Output:** You MUST output your recommendation as a single, valid JSON array of stack objects within a \`<json_stacks>\` XML tag.
     - The JSON must be perfectly formatted, with no trailing commas or other syntax errors.
     - Each object in the top-level array is a complete stack.
@@ -186,8 +175,6 @@ You must follow these instructions precisely:
 4.  **Explain the Key Steps:** After the JSON block, provide a clear, step-by-step guide on how the user can implement the recommended stacks. Use Markdown for formatting.
 5.  **Maintain a Conversational Tone:** Be helpful, encouraging, and ask clarifying questions if the user's request is ambiguous.
 6.  **Ask Clarifying Questions When Needed:** If the user's request is ambiguous, incomplete, or lacks enough detail for a high-quality recommendation, do NOT provide recommendations yet. Instead, ask one or two specific clarifying questions to gather the necessary information before proceeding.
-
-${retryInstructions}
 
 Example of a good response:
 <json_stacks>
@@ -299,11 +286,6 @@ Let me know if you'd like to dive deeper into any of these steps!
     async (query: string, conversationIdParam?: string, isRetry: boolean = false) => {
       setThinking(true);
       setError(null);
-      if (isRetry) {
-        setRetryCount(retryCount + 1);
-      } else {
-        setRetryCount(0);
-      }
       const userMessage: AgentResponse = {
         id: uuidv4(),
         role: 'user',
@@ -352,7 +334,6 @@ Let me know if you'd like to dive deeper into any of these steps!
               const nextModel = getNextModel();
               if (nextModel !== currentModel) {
                 setCurrentModel(nextModel);
-                setRetryCount(0);
                 await sendMessage(query, convId, true);
                 return;
               }
@@ -376,80 +357,53 @@ Let me know if you'd like to dive deeper into any of these steps!
         console.log('[DEBUG] Agent message text:', messageContent);
         let stacks: Stack[] = [];
 
-        // Try to extract and parse <json_stacks> even if not closed
-        let openBlockMatch = messageContent.match(/<json_stacks>([\s\S]*)/i);
-        if (openBlockMatch && openBlockMatch[1]) {
-          let jsonText = openBlockMatch[1].trim();
-          // Try to recover as much as possible
-          const lastObj = jsonText.lastIndexOf('}');
-          const lastArr = jsonText.lastIndexOf(']');
-          let cutoff = Math.max(lastObj, lastArr);
-          if (cutoff !== -1) {
-            jsonText = jsonText.slice(0, cutoff + 1);
-            try {
-              const parsed = JSON.parse(jsonText);
-              stacks = Array.isArray(parsed) ? parsed : [];
-            } catch (e) {
-              // Parsing failed, do nothing
+        // Extract and parse stacks from the <json_stacks> tag
+        const stackRegex = /<json_stacks>(.*?)<\/json_stacks>/s;
+        const match = messageContent.match(stackRegex);
+
+        if (match && match[1]) {
+          try {
+            const parsed = JSON.parse(match[1]);
+            stacks = Array.isArray(parsed) ? parsed : [];
+            console.log('[DEBUG] Successfully parsed stacks:', stacks.length);
+            messageContent = messageContent.replace(stackRegex, '').trim();
+            messageContent = messageContent.replace(/<\/?[a-z_]+>/gi, '').trim();
+            messageContent = messageContent.replace(/```[\s\S]*?```/g, '').trim();
+            messageContent = messageContent.replace(/^\{[\s\S]*\}$/gm, '').trim();
+            if (!messageContent || messageContent.length < 5) {
+              messageContent = 'Here are your recommended stacks. See the sidebar for details.';
             }
-          }
-        }
-        // Remove <json_stacks> block, even if not closed
-        const stackBlockRegex = /<json_stacks>[\s\S]*/i;
-        if (stackBlockRegex.test(messageContent)) {
-          messageContent = messageContent.replace(stackBlockRegex, '').trim();
-          if (!messageContent || messageContent.length < 5) {
-            messageContent = 'Here are your recommended stacks. See the sidebar for details.';
+          } catch (e) {
+            console.error('Failed to parse stacks from AI response:', e);
           }
         } else {
-          // Extract and parse stacks from the <json_stacks> tag
-          const stackRegex = /<json_stacks>(.*?)<\/json_stacks>/s;
-          const match = messageContent.match(stackRegex);
-
-          if (match && match[1]) {
-            try {
-              const parsed = JSON.parse(match[1]);
-              stacks = Array.isArray(parsed) ? parsed : [];
-              messageContent = messageContent.replace(stackRegex, '').trim();
-              messageContent = messageContent.replace(/<\/?[a-z_]+>/gi, '').trim();
-              messageContent = messageContent.replace(/```[\s\S]*?```/g, '').trim();
-              messageContent = messageContent.replace(/^\{[\s\S]*\}$/gm, '').trim();
-              if (!messageContent || messageContent.length < 5) {
-                messageContent = 'Here are your recommended stacks. See the sidebar for details.';
+          // Try to extract and parse <json_stacks> even if not closed
+          let openBlockMatch = messageContent.match(/<json_stacks>([\s\S]*)/i);
+          if (openBlockMatch && openBlockMatch[1]) {
+            let jsonText = openBlockMatch[1].trim();
+            // Try to recover as much as possible
+            const lastObj = jsonText.lastIndexOf('}');
+            const lastArr = jsonText.lastIndexOf(']');
+            let cutoff = Math.max(lastObj, lastArr);
+            if (cutoff !== -1) {
+              jsonText = jsonText.slice(0, cutoff + 1);
+              try {
+                const parsed = JSON.parse(jsonText);
+                stacks = Array.isArray(parsed) ? parsed : [];
+                console.log('[DEBUG] Successfully parsed incomplete stacks:', stacks.length);
+                messageContent = messageContent.replace(/<json_stacks>[\s\S]*/i, '').trim();
+                if (!messageContent || messageContent.length < 5) {
+                  messageContent = 'Here are your recommended stacks. See the sidebar for details.';
+                }
+              } catch (e) {
+                console.error('Failed to parse incomplete stacks:', e);
               }
-            } catch (e) {
-              console.error('Failed to parse stacks from AI response:', e);
             }
           }
         }
 
-        // Check if we have fewer than 2 stacks and handle retry logic
-        if (stacks.length < 2 && !isRetry) {
-          console.warn(`Agent returned ${stacks.length} stacks, need at least 2. Retry count: ${retryCount}`);
-          
-          if (retryCount < 2) {
-            // Retry with the same model
-            console.log('Retrying with same model...');
-            const retryPrompt = "You must output at least 2 stacks in <json_stacks>. Please regenerate your answer with exactly 2-4 diverse AI stacks.";
-            await sendMessage(retryPrompt, convId, true);
-            return;
-          } else {
-            // Switch to next model
-            const nextModel = getNextModel();
-            if (nextModel !== currentModel) {
-              console.log(`Switching from ${currentModel} to ${nextModel} for better compliance`);
-              setCurrentModel(nextModel);
-              const retryPrompt = "You must output at least 2 stacks in <json_stacks>. Please regenerate your answer with exactly 2-4 diverse AI stacks.";
-              setRetryCount(0); // Reset retry count for new model
-              await sendMessage(retryPrompt, convId, true);
-              return;
-            } else {
-              // We've tried all models, show error
-              console.error('All models failed to provide at least 2 stacks');
-              setError('Unable to generate multiple stacks. Please try rephrasing your request.');
-            }
-          }
-        }
+        console.log('[DEBUG] Final stacks count:', stacks.length);
+        console.log('[DEBUG] Final message content:', messageContent);
 
         const assistantMessage: AgentResponse = {
           id: uuidv4(),
@@ -499,7 +453,6 @@ Let me know if you'd like to dive deeper into any of these steps!
       buildConversationalPrompt,
       conversationId,
       preferences,
-      retryCount,
       currentModel,
       getNextModel,
     ]
